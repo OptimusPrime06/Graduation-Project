@@ -7,36 +7,18 @@
 
 import UIKit
 
-private let backgroundImage: UIImageView = {
+private let backgroundImage = BackgroundImageView()
 
-    let backgroundImage = UIImageView(image: UIImage(named: "backGround"))
-    backgroundImage.contentMode = .scaleAspectFill
-    backgroundImage.translatesAutoresizingMaskIntoConstraints = false
-
-    return backgroundImage
-}()
-
-private let createAccountLabel: UILabel = {
-
-    let createAccountLabel = UILabel()
-    createAccountLabel.text = "Step 3"
-    createAccountLabel.numberOfLines = 0
-    createAccountLabel.font = .systemFont(ofSize: 40, weight: .bold)
-    createAccountLabel.textColor = .white
-
-    createAccountLabel.translatesAutoresizingMaskIntoConstraints = false
-
-    return createAccountLabel
-}()
+private let createAccountLabel = StepNumberLabel(stepNumber: 3)
 
 private let progressBarView: SegmentedBarView = {
 
     let progressBarView = SegmentedBarView()
     let colors = [
-        UIColor(named: "previousPageColor")!,
-        UIColor(named: "previousPageColor")!,
-        UIColor(named: "currentPageColor")!,
-        UIColor(named: "nextPageColor")!
+        UIColor(named: Constants.previousPageColor)!,
+        UIColor(named: Constants.previousPageColor)!,
+        UIColor(named: Constants.currentPageColor)!,
+        UIColor(named: Constants.nextPageColor)!
     ]
     let progressViewModel = SegmentedBarView.Model(
         colors: colors, spacing: 12

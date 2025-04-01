@@ -9,36 +9,18 @@ import UIKit
 
 //MARK: - Declaring UI components
 
-private let backgroundImage: UIImageView = {
+private let backgroundImage = BackgroundImageView()
 
-    let backgroundImage = UIImageView(image: UIImage(named: "backGround"))
-    backgroundImage.contentMode = .scaleAspectFill
-    backgroundImage.translatesAutoresizingMaskIntoConstraints = false
-
-    return backgroundImage
-}()
-
-private let createAccountLabel: UILabel = {
-
-    let createAccountLabel = UILabel()
-    createAccountLabel.text = "Step 1"
-    createAccountLabel.numberOfLines = 0
-    createAccountLabel.font = .systemFont(ofSize: 40, weight: .bold)
-    createAccountLabel.textColor = .white
-
-    createAccountLabel.translatesAutoresizingMaskIntoConstraints = false
-
-    return createAccountLabel
-}()
+private let createAccountLabel = StepNumberLabel(stepNumber: 1)
 
 private let progressBarView: SegmentedBarView = {
 
     let progressBarView = SegmentedBarView()
     let colors = [
-        UIColor(named: "currentPageColor")!,
-        UIColor(named: "nextPageColor")!,
-        UIColor(named: "nextPageColor")!,
-        UIColor(named: "nextPageColor")!
+        UIColor(named: Constants.currentPageColor)!,
+        UIColor(named: Constants.nextPageColor)!,
+        UIColor(named: Constants.nextPageColor)!,
+        UIColor(named: Constants.nextPageColor)!
     ]
     let progressViewModel = SegmentedBarView.Model(
         colors: colors, spacing: 12
@@ -50,100 +32,19 @@ private let progressBarView: SegmentedBarView = {
     return progressBarView
 }()
 
-private let nameTextField: UITextField = {
+private let nameTextField = SignUpTextFields(placeholder: "Name", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
 
-    let nameTextField = UITextField()
-    nameTextField.textColor = .white
-    nameTextField.attributedPlaceholder = NSAttributedString(
-        string: " Name",
-        attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
-    )
-    nameTextField.backgroundColor = UIColor(
-        named: "signUpTextFieldBackgroundColor")
-    nameTextField.layer.borderWidth = 2
-    nameTextField.layer.borderColor = UIColor.gray.cgColor
-    nameTextField.layer.cornerRadius = 12
-    let padding = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 0))
-    nameTextField.leftView = padding
-    nameTextField.leftViewMode = .always
+private let emailTextField = SignUpTextFields(placeholder: "Email", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
 
-    nameTextField.translatesAutoresizingMaskIntoConstraints = false
+private let passwordTextField = SignUpTextFields(placeholder: "Password", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
 
-    return nameTextField
-}()
-
-private let emailTextField: UITextField = {
-
-    let emailTextField = UITextField()
-    emailTextField.textColor = .white
-    emailTextField.attributedPlaceholder = NSAttributedString(
-        string: " Email",
-        attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
-    )
-    emailTextField.backgroundColor = UIColor(
-        named: "signUpTextFieldBackgroundColor")
-    emailTextField.layer.borderWidth = 2
-    emailTextField.layer.borderColor = UIColor.gray.cgColor
-    emailTextField.layer.cornerRadius = 12
-    let padding = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 0))
-    emailTextField.leftView = padding
-    emailTextField.leftViewMode = .always
-
-    emailTextField.translatesAutoresizingMaskIntoConstraints = false
-
-    return emailTextField
-}()
-
-private let passwordTextField: UITextField = {
-
-    let passwordTextField = UITextField()
-    passwordTextField.textColor = .white
-    passwordTextField.attributedPlaceholder = NSAttributedString(
-        string: "Password",
-        attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
-    )
-    passwordTextField.backgroundColor = UIColor(
-        named: "signUpTextFieldBackgroundColor")
-    passwordTextField.isSecureTextEntry = true
-    passwordTextField.layer.borderWidth = 2
-    passwordTextField.layer.borderColor = UIColor.gray.cgColor
-    passwordTextField.layer.cornerRadius = 12
-    let padding = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 0))
-    passwordTextField.leftView = padding
-    passwordTextField.leftViewMode = .always
-
-    passwordTextField.translatesAutoresizingMaskIntoConstraints = false
-
-    return passwordTextField
-}()
-
-private let ageTextField: UITextField = {
-
-    let ageTextField = UITextField()
-    ageTextField.textColor = .white
-    ageTextField.attributedPlaceholder = NSAttributedString(
-        string: "Age",
-        attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
-    )
-    ageTextField.backgroundColor = UIColor(
-        named: "signUpTextFieldBackgroundColor")
-    ageTextField.layer.borderWidth = 2
-    ageTextField.layer.borderColor = UIColor.gray.cgColor
-    ageTextField.layer.cornerRadius = 12
-    let padding = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 0))
-    ageTextField.leftView = padding
-    ageTextField.leftViewMode = .always
-
-    ageTextField.translatesAutoresizingMaskIntoConstraints = false
-
-    return ageTextField
-}()
+private let ageTextField = SignUpTextFields(placeholder: "Age", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
 
 private let maleGenderButton: UIButton = {
 
     let maleGenderButton = UIButton()
     maleGenderButton.backgroundColor = UIColor(
-        named: "signUpTextFieldBackgroundColor")
+        named: Constants.signUpTextFieldsBackgroundColor)
     maleGenderButton.setAttributedTitle(
         NSAttributedString(
             string: "Male",
@@ -164,7 +65,7 @@ private let femaleGenderButton: UIButton = {
     let femaleGenderButton = UIButton()
 
     femaleGenderButton.backgroundColor = UIColor(
-        named: "signUpTextFieldBackgroundColor")
+        named: Constants.signUpTextFieldsBackgroundColor)
     femaleGenderButton.setAttributedTitle(
         NSAttributedString(
             string: "Female",
@@ -272,6 +173,9 @@ extension CreateAccountStep1ViewController {
         view.addSubview(genderStackView)
         view.addSubview(driverExperiencDropDownMenu)
         view.addSubview(navigationButtons)
+        
+        //Password TextField customization
+        passwordTextField.isSecureTextEntry = true
 
         //Background Image Constraints
         let backgroundImageConstraints = [
@@ -296,6 +200,7 @@ extension CreateAccountStep1ViewController {
 
         NSLayoutConstraint.activate(setUpLabelConstraints)
 
+        //Prgress Bar Constraints
         let progressBarConstraints = [
             progressBarView.topAnchor.constraint(
                 equalTo: createAccountLabel.bottomAnchor, constant: 30),
