@@ -33,8 +33,7 @@ private let progressBarView: SegmentedBarView = {
 private let selectDiseasesLabel: UILabel = {
 
     let label = UILabel()
-    label.text =
-        "Select from these choronic diseases if you have any ( tap on disease to mark it )"
+    label.text = "Select from these choronic diseases if you have any ( tap on disease to mark it )"
     label.textColor = .white
     label.font = .systemFont(ofSize: 18)
     label.numberOfLines = 3
@@ -43,32 +42,6 @@ private let selectDiseasesLabel: UILabel = {
 
     return label
 }()
-
-private let conditions = [
-    "Only one eye (monocular vision)",
-    "Blurry or cloudy vision",
-    "Narrow vision (glaucoma)",
-    "Blind spots (diabetic eye disease, stroke effects)",
-    "Droopy eyelid (ptosis)",
-    "Facial burns or scars",
-    "Severe eye misalignment",
-    "Scars or damage to the cornea ",
-    "Seizures (epilepsy)",
-    "Tremors & stiff muscles",
-    "Sudden sleep attacks (narcolepsy)",
-    "Partial face paralysis (stroke or Bell’s palsy)",
-    "Sleep apnea (severe snoring & breathing issues)",
-    "Severe migraines",
-    "Nerve diseases like multiple sclerosis that affect vision & alertness",
-    "Extreme fatigue (chronic tiredness)",
-    "Severe anxiety",
-    "Depression",
-    "Diabetes",
-    "Autoimmune disease (e.g., lupus)",
-    "Facial deformities (conditions affecting facial structure)",
-    "Skin patches or color differences (vitiligo if near the eyes)",
-    "Low or high thyroid function (causes extreme tiredness)",
-]
 
 private var selectedConditions: Set<String> = []
 
@@ -297,7 +270,7 @@ extension CreateAccountStep3ViewController: UITableViewDelegate,
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)
         -> Int
     {
-        conditions.count
+        Constants.conditions.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
@@ -305,11 +278,11 @@ extension CreateAccountStep3ViewController: UITableViewDelegate,
     {
         let cell = tableView.dequeueReusableCell(
             withIdentifier: "cell", for: indexPath)
-        let condition = conditions[indexPath.row]
+        let condition = Constants.conditions[indexPath.row]
         cell.accessoryType =
             selectedConditions.contains(condition) ? .checkmark : .none
         cell.textLabel?.textColor = .white
-        cell.backgroundColor = UIColor(named: "signUpTextFieldBackgroundColor")
+        cell.backgroundColor = UIColor(named: Constants.signUpTextFieldsBackgroundColor)
         cell.textLabel?.font = .systemFont(ofSize: 14)
         cell.textLabel?.numberOfLines = 0
         cell.textLabel?.text = condition
@@ -319,7 +292,7 @@ extension CreateAccountStep3ViewController: UITableViewDelegate,
     func tableView(
         _ tableView: UITableView, didSelectRowAt indexPath: IndexPath
     ) {
-        let condition = conditions[indexPath.row]
+        let condition = Constants.conditions[indexPath.row]
         if selectedConditions.contains(condition) {
             selectedConditions.remove(condition)
         } else {
