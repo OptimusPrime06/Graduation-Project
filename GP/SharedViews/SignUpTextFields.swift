@@ -9,7 +9,6 @@ import UIKit
 
 class SignUpTextFields: UITextField {
 
-<<<<<<< HEAD
     init(placeholder : String, backgrounColor: String){
         super.init(frame: .zero)
         self.textColor = .white
@@ -31,15 +30,5 @@ class SignUpTextFields: UITextField {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-=======
-    /*
-    // Only override draw() if you perform custom drawing.
-    // An empty implementation adversely affects performance during animation.
-    override func draw(_ rect: CGRect) {
-        // Drawing code
-    }
-    */
 
->>>>>>> refs/remotes/origin/main
 }
