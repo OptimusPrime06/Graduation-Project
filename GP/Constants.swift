@@ -6,6 +6,7 @@
 //
 
 import Foundation
+<<<<<<< HEAD
 
 struct Constants {
     
@@ -25,3 +26,5 @@ struct Constants {
     static let checkBoxColor = "checkBoxColor"
     
 }
+=======
+>>>>>>> refs/remotes/origin/main
