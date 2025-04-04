@@ -11,7 +11,7 @@ import UIKit
 private let backgroundImage = BackgroundImageView()
 
 private let appLogo: UIImageView = {
-    let appLogo = UIImageView(image: UIImage(named: "Eyebrows&eyelashes"))
+    let appLogo = UIImageView(image: UIImage(named: "whiteEyes"))
     appLogo.contentMode = .scaleAspectFill
 
     appLogo.translatesAutoresizingMaskIntoConstraints = false
@@ -21,7 +21,7 @@ private let appLogo: UIImageView = {
 
 private let appName: UILabel = {
     let appName = UILabel()
-    appName.text = "AppName"
+    appName.text = Constants.appName
     appName.numberOfLines = 0
     appName.textColor = .white
     appName.font = .systemFont(ofSize: 32, weight: .bold)
@@ -170,7 +170,7 @@ extension LogInViewController {
         // App Name label Constraints
         let appNameLabelConstraints = [
             appName.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            appName.topAnchor.constraint(equalTo: appLogo.bottomAnchor, constant: 10),
+            appName.topAnchor.constraint(equalTo: appLogo.bottomAnchor, constant: -25),
             appName.heightAnchor.constraint(greaterThanOrEqualToConstant: 25),
         ]
 

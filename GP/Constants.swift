@@ -9,6 +9,8 @@ import Foundation
 
 struct Constants {
     
+    static let appName = "SA7EENY"
+    
     //MARK: - Images
     static let backgroundImage = "backgroundImage"
     
