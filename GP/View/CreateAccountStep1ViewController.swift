@@ -138,6 +138,8 @@ private let navigationButtons = NavigationButtons()
 
 class CreateAccountStep1ViewController: UIViewController {
     
+    var step1UserModel = UserModel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -149,12 +151,20 @@ class CreateAccountStep1ViewController: UIViewController {
     
     @objc func nextButtonTapped() {
         let vc = CreateAccountStep2ViewController()
-        navigationController?.pushViewController(vc, animated: true)
+        if emailTextField.text != "" || passwordTextField.text != "" {
+            step1UserModel.setEmail(emailTextField.text!)
+            step1UserModel.setPassword(passwordTextField.text!)
+            vc.step2UserModel = self.step1UserModel
+            navigationController?.pushViewController(vc, animated: true)
+        } else {
+            let alert = UIAlertController(title: "Missing Info", message: "email or password is empty", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+        }
     }
     
     @objc func backButtonTapped() {
-        let vc = LogInViewController()
-        navigationController?.pushViewController(vc, animated: true)
+        navigationController?.popViewController(animated: true)
     }
     
 }
@@ -314,6 +324,25 @@ extension CreateAccountStep1ViewController {
         navigationButtons.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
     }
 
+}
+
+extension CreateAccountStep1ViewController : UITextFieldDelegate {
+    
+    func textFieldsSetUp(){
+        
+        emailTextField.delegate = self
+        passwordTextField.delegate = self
+        
+        func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+            return true
+        }
+            
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            return true
+        }
+    }
+    
+    
 }
 
 //MARK: - Preview

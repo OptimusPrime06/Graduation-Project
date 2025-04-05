@@ -108,7 +108,9 @@ private let createAccountButton: UIButton = {
 }()
 
 class LogInViewController: UIViewController {
-
+  
+    var logInViewModel : LogInViewModel?
+    
     //MARK: - viewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -121,11 +123,16 @@ class LogInViewController: UIViewController {
     }
 
     @objc private func logInButtonPressed() {
-        print("Login button pressed")
+        if emailTextField.text == "" || passwordTextField.text == ""{
+            let alert = UIAlertController(title: "Missing Info", message: "email or password is empty", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+        } else {
+            logInViewModel = LogInViewModel(with: emailTextField.text!, with: passwordTextField.text!, delegate: self)
+        }
     }
 
     @objc private func createAccountButtonPressed(sender: UIButton) {
-        print("Create account button pressed")
         let vc = CreateAccountStep1ViewController()
         navigationController?.pushViewController(vc, animated: true)
     }
@@ -241,6 +248,23 @@ extension LogInViewController {
 
     }
 
+}
+
+extension LogInViewController : UITextFieldDelegate {
+    
+    func textFieldsSetUp(){
+        
+        emailTextField.delegate = self
+        passwordTextField.delegate = self
+        
+        func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+            return true
+        }
+        
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            return true
+        }
+    }
 }
 
 //MARK: - Preview

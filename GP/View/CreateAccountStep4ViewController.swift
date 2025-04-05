@@ -67,6 +67,9 @@ private let navigationButtons = NavigationButtons()
 
 class CreateAccountStep4ViewController: UIViewController {
     
+    var step4UserModel : UserModel!
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -75,6 +78,16 @@ class CreateAccountStep4ViewController: UIViewController {
         
         UISetUp()
     }
+    
+//    override func viewWillAppear(_ animated: Bool) {
+//        let handle = Auth.auth().addStateDidChangeListener { auth, user in
+//          // ...
+//        }
+//    }
+//    
+//    override func viewWillDisappear(_ animated: Bool) {
+//        Auth.auth().removeStateDidChangeListener(handle!)
+//    }
 
     @objc func addEmergencyContactField() {
         print("Ana dost add Contact")
@@ -82,12 +95,11 @@ class CreateAccountStep4ViewController: UIViewController {
     }
 
     @objc func createAccountButtonTapped() {
-
+        _ = CreateAccountViewModel(with: step4UserModel, delegate: self)
     }
 
     @objc func backButtonTapped() {
-        let vc = CreateAccountStep3ViewController()
-        navigationController?.pushViewController(vc, animated: true)
+        navigationController?.popViewController(animated: true)
     }
 
 }
