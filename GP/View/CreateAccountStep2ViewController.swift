@@ -56,9 +56,10 @@ private let recordVideoButton: UIButton = {
 private let navigationButtons = NavigationButtons()
 
 
-class CreateAccountStep2ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class CreateAccountStep2ViewController: UIViewController {
 
     private var videoURL: URL?
+    var step2UserModel : UserModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,12 +72,12 @@ class CreateAccountStep2ViewController: UIViewController, UIImagePickerControlle
     
     @objc func nextButtonTapped() {
         let vc = CreateAccountStep3ViewController()
+        vc.step3UserModel = self.step2UserModel
         navigationController?.pushViewController(vc, animated: true)
     }
     
     @objc func backButtonTapped() {
-        let vc = CreateAccountStep1ViewController()
-        navigationController?.pushViewController(vc, animated: true)
+        navigationController?.popViewController(animated: true)
     }
 
 }
@@ -166,7 +167,12 @@ extension CreateAccountStep2ViewController {
         navigationButtons.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
         
     }
+    
+}
 
+//MARK: - Recording & Displaying Video
+extension CreateAccountStep2ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
     @objc private func recordVideo() {
         let picker = UIImagePickerController()
         picker.sourceType = .camera
@@ -224,7 +230,6 @@ extension CreateAccountStep2ViewController {
             player.play()
         }
     }
-    
 }
 
 //MARK: - Preview

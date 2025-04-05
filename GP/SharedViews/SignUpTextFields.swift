@@ -7,7 +7,7 @@
 
 import UIKit
 
-class SignUpTextFields: UITextField {
+final class SignUpTextFields: UITextField {
 
     init(placeholder : String, backgrounColor: String){
         super.init(frame: .zero)

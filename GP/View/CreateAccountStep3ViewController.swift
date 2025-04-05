@@ -96,6 +96,8 @@ private let navigationButtons = NavigationButtons()
 
 class CreateAccountStep3ViewController: UIViewController {
 
+    var step3UserModel : UserModel!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -109,12 +111,12 @@ class CreateAccountStep3ViewController: UIViewController {
     
     @objc func nextButtonTapped() {
         let vc = CreateAccountStep4ViewController()
+        vc.step4UserModel = self.step3UserModel
         navigationController?.pushViewController(vc, animated: true)
     }
     
     @objc func backButtonTapped() {
-        let vc = CreateAccountStep2ViewController()
-        navigationController?.pushViewController(vc, animated: true)
+        navigationController?.popViewController(animated: true)
     }
 
 }

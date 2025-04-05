@@ -7,7 +7,7 @@
 
 import UIKit
 
-class StepNumberLabel: UILabel {
+final class StepNumberLabel: UILabel {
 
     init(stepNumber : Int){
         super.init(frame: .zero)

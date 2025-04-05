@@ -7,7 +7,7 @@
 
 import UIKit
 
-class BackgroundImageView: UIImageView {
+final class BackgroundImageView: UIImageView {
 
     init(){
         super.init(image: UIImage(named: Constants.backgroundImage))
