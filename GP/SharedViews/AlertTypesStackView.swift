@@ -21,7 +21,7 @@ final class AlertTypesStackView: UIStackView {
     }()
     
     private let soundAlertLabel : UILabel = {
-       
+        
         let label = UILabel()
         label.text = "Sound"
         label.textColor = .white
@@ -33,7 +33,7 @@ final class AlertTypesStackView: UIStackView {
     }()
     
     private let soundAlertStackView : UIStackView = {
-       
+        
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 5
@@ -54,7 +54,7 @@ final class AlertTypesStackView: UIStackView {
     }()
     
     private let lightAlertLabel : UILabel = {
-       
+        
         let label = UILabel()
         label.text = "Light"
         label.textColor = .white
@@ -66,7 +66,7 @@ final class AlertTypesStackView: UIStackView {
     }()
     
     private let lightAlertStackView : UIStackView = {
-       
+        
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 5
@@ -100,7 +100,7 @@ final class AlertTypesStackView: UIStackView {
         lightAlertStackView.addArrangedSubview(checkBox2)
         lightAlertStackView.addArrangedSubview(lightAlertImage)
         lightAlertStackView.addArrangedSubview(lightAlertLabel)
-
+        
         
         //Alert StackView Set Up
         self.axis = .horizontal
@@ -112,5 +112,5 @@ final class AlertTypesStackView: UIStackView {
     }
     
     
-
+    
 }
