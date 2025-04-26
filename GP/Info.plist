@@ -19,5 +19,9 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need to acces your Location</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to record your face</string>
 </dict>
 </plist>

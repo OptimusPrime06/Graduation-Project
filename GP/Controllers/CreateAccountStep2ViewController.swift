@@ -178,6 +178,7 @@ extension CreateAccountStep2ViewController : UIImagePickerControllerDelegate, UI
         picker.sourceType = .camera
         picker.mediaTypes = [UTType.movie.identifier]
         picker.videoQuality = .typeMedium
+        picker.cameraDevice = .front    // front camera
         picker.delegate = self
         present(picker, animated: true)
     }
@@ -231,6 +232,57 @@ extension CreateAccountStep2ViewController : UIImagePickerControllerDelegate, UI
         }
     }
 }
+
+//let requestedTime = time
+//
+//generator.generateCGImageAsynchronously(for: requestedTime) { cgImage, actualTime, result, error in
+//    if let cgImage = cgImage, error == nil {
+//        let thumbnail = UIImage(cgImage: cgImage)
+//        DispatchQueue.main.async {
+//            videoPreview.image = thumbnail
+//            self.addPlayButton()
+//        }
+//    } else {
+//        print("Failed to generate thumbnail: \(error?.localizedDescription ?? "Unknown error")")
+//    }
+//}
+
+//MARK: - Code for this warning error for ios > 18
+
+//private func generateThumbnail(from url: URL) {
+//    let asset = AVURLAsset(url: url)
+//    let generator = AVAssetImageGenerator(asset: asset)
+//    generator.appliesPreferredTrackTransform = true
+//    let time = CMTime(seconds: 1, preferredTimescale: 600)
+//    
+//    if #available(iOS 18.0, *) {
+//        let times = [NSValue(time: time)]
+//        generator.generateCGImagesAsynchronously(forTimes: times) { _, cgImage, _, _, error in
+//            if let cgImage = cgImage, error == nil {
+//                let thumbnail = UIImage(cgImage: cgImage)
+//                DispatchQueue.main.async {
+//                    self.videoPreview.image = thumbnail
+//                    self.addPlayButton()
+//                }
+//            } else if let error = error {
+//                print("Failed to generate thumbnail: \(error.localizedDescription)")
+//            }
+//        }
+//    } else {
+//        DispatchQueue.global().async {
+//            if let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) {
+//                let thumbnail = UIImage(cgImage: cgImage)
+//                DispatchQueue.main.async {
+//                    self.videoPreview.image = thumbnail
+//                    self.addPlayButton()
+//                }
+//            } else {
+//                print("Failed to generate thumbnail (iOS <18)")
+//            }
+//        }
+//    }
+//}
+
 
 //MARK: - Preview
 //#if DEBUG

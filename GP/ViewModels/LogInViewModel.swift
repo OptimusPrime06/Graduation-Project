@@ -21,7 +21,7 @@ class LogInViewModel {
                 self?.delegate?.present(alert, animated: true)
                 print(logInError.localizedDescription)
             } else {
-                let vc = HomeTestViewController()
+                let vc = MapViewController()
                 self?.delegate?.navigationController?.pushViewController(vc, animated: true)
             }          
         }
