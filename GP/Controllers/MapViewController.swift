@@ -17,6 +17,7 @@ class MapViewController: UIViewController {
     private let resultsTableView = UITableView()
     private var buttonBottomToViewConstraint: NSLayoutConstraint!
     private var buttonBottomToRouteInfoConstraint: NSLayoutConstraint!
+    private var destinationAnnotation: MKPointAnnotation?
     
     private let routeInfoLabel: UILabel = {
         let label = UILabel()
@@ -120,7 +121,7 @@ extension MapViewController {
         view.addSubview(startMonitoringButton)
         
         NSLayoutConstraint.activate([
-            searchField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            searchField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -10),
             searchField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             searchField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             searchField.heightAnchor.constraint(equalToConstant: 40),
@@ -214,6 +215,18 @@ extension MapViewController {
             return
         }
         
+        // Remove existing destination pin if any
+        if let existingAnnotation = destinationAnnotation {
+            mapView.removeAnnotation(existingAnnotation)
+        }
+        
+        // Add new destination pin
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = destinationCoordinate
+        annotation.title = "Destination"
+        mapView.addAnnotation(annotation)
+        destinationAnnotation = annotation
+        
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation.coordinate))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate))
@@ -255,6 +268,30 @@ extension MapViewController: MKMapViewDelegate {
             return renderer
         }
         return MKOverlayRenderer()
+    }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        // Don't customize user location annotation
+        if annotation is MKUserLocation {
+            return nil
+        }
+        
+        let identifier = "DestinationPin"
+        var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+        
+        if annotationView == nil {
+            annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            annotationView?.canShowCallout = true
+        } else {
+            annotationView?.annotation = annotation
+        }
+        
+        if let markerView = annotationView as? MKMarkerAnnotationView {
+            markerView.markerTintColor = .red
+            markerView.glyphImage = UIImage(systemName: "mappin.circle.fill")
+        }
+        
+        return annotationView
     }
 }
 
@@ -314,6 +351,9 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
 extension MapViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
+        if let text = textField.text, !text.isEmpty {
+            performSearch(query: text)
+        }
         return true
     }
     

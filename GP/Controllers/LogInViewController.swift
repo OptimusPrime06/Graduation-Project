@@ -120,6 +120,10 @@ class LogInViewController: UIViewController {
         passwordTextField.textColor = .black
         passwordTextField.isSecureTextEntry = true
         constraintsSetUp()
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        emailTextField.delegate = self
+        passwordTextField.delegate = self
     }
     
     //MARK: - Buttons functions
@@ -158,6 +162,10 @@ class LogInViewController: UIViewController {
     @objc private func createAccountButtonPressed(sender: UIButton) {
         let vc = CreateAccountStep1ViewController()
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
     
 }
@@ -281,6 +289,7 @@ extension LogInViewController : UITextFieldDelegate {
         passwordTextField.delegate = self
         
         func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+            textField.resignFirstResponder()
             return true
         }
         
