@@ -7,32 +7,14 @@
 
 import UIKit
 import Firebase
-<<<<<<< HEAD
-=======
 import FirebaseAuth
->>>>>>> origin/main3
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     var window: UIWindow?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-<<<<<<< HEAD
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        
-        guard let windowScene = (scene as? UIWindowScene) else { return }
-        
-        
-        self.window = UIWindow(windowScene: windowScene)
-        
-        // Set initial View Controller
-        let vc = LogInViewController()
-        let navigationController = UINavigationController(rootViewController: vc)
-        self.window?.rootViewController = navigationController
-        
-=======
+
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         self.window = UIWindow(windowScene: windowScene)
@@ -46,13 +28,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let navigationController = UINavigationController(rootViewController: loginVC)
             self.window?.rootViewController = navigationController
         }
->>>>>>> origin/main3
         // Make the window visible
         window?.makeKeyAndVisible()
     }
     
-<<<<<<< HEAD
-=======
     func showLoginScreen() {
         let LoginVC = LogInViewController()
         let navigationController = UINavigationController(rootViewController: LoginVC)
@@ -66,7 +45,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = navigationController
     }
     
->>>>>>> origin/main3
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.
         // This occurs shortly after the scene enters the background, or when its session is discarded.

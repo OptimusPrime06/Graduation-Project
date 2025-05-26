@@ -118,10 +118,7 @@ class LogInViewController: UIViewController {
         
         emailTextField.textColor = .black
         passwordTextField.textColor = .black
-<<<<<<< HEAD:GP/View/LogInViewController.swift
-=======
         passwordTextField.isSecureTextEntry = true
->>>>>>> origin/main3:GP/Controllers/LogInViewController.swift
         constraintsSetUp()
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
@@ -167,13 +164,10 @@ class LogInViewController: UIViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
-<<<<<<< HEAD:GP/View/LogInViewController.swift
-=======
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
     
->>>>>>> origin/main3:GP/Controllers/LogInViewController.swift
 }
 
 extension LogInViewController {
