@@ -19,5 +19,7 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSContactsUsageDescription</key>
+	<string>This app needs access to contacts to add emergency contacts for drowsiness alerts.</string>
 </dict>
 </plist>

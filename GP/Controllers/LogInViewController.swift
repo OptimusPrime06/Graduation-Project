@@ -118,7 +118,15 @@ class LogInViewController: UIViewController {
         
         emailTextField.textColor = .black
         passwordTextField.textColor = .black
+<<<<<<< HEAD:GP/View/LogInViewController.swift
+=======
+        passwordTextField.isSecureTextEntry = true
+>>>>>>> origin/main3:GP/Controllers/LogInViewController.swift
         constraintsSetUp()
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        emailTextField.delegate = self
+        passwordTextField.delegate = self
     }
     
     //MARK: - Buttons functions
@@ -159,6 +167,13 @@ class LogInViewController: UIViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
+<<<<<<< HEAD:GP/View/LogInViewController.swift
+=======
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+    
+>>>>>>> origin/main3:GP/Controllers/LogInViewController.swift
 }
 
 extension LogInViewController {
@@ -280,6 +295,7 @@ extension LogInViewController : UITextFieldDelegate {
         passwordTextField.delegate = self
         
         func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+            textField.resignFirstResponder()
             return true
         }
         
@@ -289,7 +305,7 @@ extension LogInViewController : UITextFieldDelegate {
     }
 }
 
-//MARK: - Preview
+////MARK: - Preview
 //#if DEBUG
 //#Preview("Login View"){
 //    LogInViewController()
