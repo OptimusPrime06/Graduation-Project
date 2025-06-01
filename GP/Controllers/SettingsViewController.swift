@@ -10,6 +10,8 @@ import AudioToolbox
 import AVFoundation
 import Contacts
 import ContactsUI
+import FirebaseFirestore
+import FirebaseAuth
 
 // MARK: - UserDefaults Extension
 extension UserDefaults {
@@ -60,6 +62,7 @@ class SettingsViewController: UIViewController {
     private var customSounds: [(id: String, name: String)] = []
     private var alarmSounds: [(id: String, name: String)] = []
     private var emergencyContacts: [[String: String]] = []
+    private let db = Firestore.firestore()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -105,11 +108,43 @@ class SettingsViewController: UIViewController {
     }
     
     private func loadEmergencyContacts() {
-        emergencyContacts = UserDefaults.standard.emergencyContacts
+        guard let user = Auth.auth().currentUser else { return }
+        
+        db.collection("users").document(user.uid).getDocument { [weak self] (document, error) in
+            if let error = error {
+                print("Error loading emergency contacts: \(error)")
+                return
+            }
+            
+            if let data = document?.data(),
+               let contacts = data["emergencyContacts"] as? [[String: String]] {
+                DispatchQueue.main.async {
+                    self?.emergencyContacts = contacts
+                    self?.tableView.reloadData()
+                }
+            } else {
+                // If no emergency contacts array exists, create one
+                self?.db.collection("users").document(user.uid).setData([
+                    "emergencyContacts": []
+                ], merge: true) { error in
+                    if let error = error {
+                        print("Error creating emergency contacts array: \(error)")
+                    }
+                }
+            }
+        }
     }
     
     private func saveEmergencyContacts() {
-        UserDefaults.standard.emergencyContacts = emergencyContacts
+        guard let user = Auth.auth().currentUser else { return }
+        
+        db.collection("users").document(user.uid).setData([
+            "emergencyContacts": emergencyContacts
+        ], merge: true) { error in
+            if let error = error {
+                print("Error saving emergency contacts: \(error)")
+            }
+        }
     }
     
     private func setupAudioSession() {

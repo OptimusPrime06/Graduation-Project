@@ -76,6 +76,10 @@ class CreateAccountStep4ViewController: UIViewController {
         //MARK: - Disabiling the Navigation Bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
+        // Add tap gesture recognizer to dismiss keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        
         UISetUp()
     }
     
@@ -100,6 +104,10 @@ class CreateAccountStep4ViewController: UIViewController {
 
     @objc func backButtonTapped() {
         navigationController?.popViewController(animated: true)
+    }
+
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
 
 }

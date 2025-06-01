@@ -126,9 +126,53 @@ class LogInViewController: UIViewController {
         passwordTextField.delegate = self
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Clear text fields when view appears
+        emailTextField.text = ""
+        passwordTextField.text = ""
+    }
+    
     //MARK: - Buttons functions
     @objc private func forgotPasswordButtonPressed() {
-        print("forgot password button pressed")
+        let alert = UIAlertController(
+            title: "Reset Password",
+            message: "Enter your email address to receive a password reset link",
+            preferredStyle: .alert
+        )
+        
+        alert.addTextField { textField in
+            textField.placeholder = "Email"
+            textField.keyboardType = .emailAddress
+            textField.autocapitalizationType = .none
+            textField.autocorrectionType = .no
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Send", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let email = alert.textFields?.first?.text,
+                  !email.isEmpty else {
+                self?.showAlert(title: "Error", message: "Please enter your email address")
+                return
+            }
+            
+            Auth.auth().sendPasswordReset(withEmail: email) { error in
+                if let error = error {
+                    self.showAlert(title: "Error", message: error.localizedDescription)
+                } else {
+                    self.showAlert(title: "Success", message: "Password reset link has been sent to your email")
+                }
+            }
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     
     @objc private func logInButtonPressed() {
