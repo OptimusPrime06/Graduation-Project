@@ -1,11 +1,13 @@
 //
-//  CreateAccountStep3ViewController.swift
+//  CreateAccountStep4ViewController.swift
 //  GP
 //
-//  Created by Gulliver Raed on 3/25/25.
+//  Created by Gulliver Raed on 3/29/25.
 //
 
 import UIKit
+
+//MARK: - Declaring UI components
 
 private let backgroundImage = BackgroundImageView()
 
@@ -17,8 +19,7 @@ private let progressBarView: SegmentedBarView = {
     let colors = [
         UIColor(named: Constants.previousPageColor)!,
         UIColor(named: Constants.previousPageColor)!,
-        UIColor(named: Constants.currentPageColor)!,
-        UIColor(named: Constants.nextPageColor)!
+        UIColor(named: Constants.currentPageColor)!
     ]
     let progressViewModel = SegmentedBarView.Model(
         colors: colors, spacing: 12
@@ -30,129 +31,112 @@ private let progressBarView: SegmentedBarView = {
     return progressBarView
 }()
 
-private let selectDiseasesLabel: UILabel = {
-
+private let emergencyContactsLabel: UILabel = {
     let label = UILabel()
-    label.text = "Select from these choronic diseases if you have any ( tap on disease to mark it )"
+    label.text = "Emergency Contacts (at least 2)"
     label.textColor = .white
-    label.font = .systemFont(ofSize: 18)
-    label.numberOfLines = 3
-
+    label.font = .systemFont(ofSize: 18, weight: .bold)
     label.translatesAutoresizingMaskIntoConstraints = false
-
     return label
 }()
 
-private var selectedConditions: Set<String> = []
-
-private let chronicDiseasesTableView: UITableView = {
-    let tableView = UITableView()
-    tableView.layer.borderWidth = 2
-    tableView.layer.borderColor = UIColor.gray.cgColor
-    tableView.layer.cornerRadius = 5
-
-    tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-    tableView.allowsMultipleSelection = true
-
-    tableView.translatesAutoresizingMaskIntoConstraints = false
-
-    return tableView
+private let emergencyContactsStackView: UIStackView = {
+    let stackView = UIStackView()
+    stackView.axis = .vertical
+    stackView.spacing = 10
+    
+    stackView.translatesAutoresizingMaskIntoConstraints = false
+    
+    return stackView
 }()
 
-private let otherDiseases: UITextView = {
+private let addContactButton: UIButton = {
+    let button = UIButton(type: .system)
+    button.setTitle("+ Add Contact", for: .normal)
+    button.setTitleColor(.white, for: .normal)
+    button.backgroundColor = UIColor(named: Constants.nextButtonColor)
+    button.layer.cornerRadius = 8
 
-    let textView = UITextView()
-    textView.text = "Other"
-    textView.textColor = .gray
-    textView.backgroundColor = UIColor(named: "signUpTextFieldBackgroundColor")
-    textView.layer.cornerRadius = 8
-    textView.layer.borderWidth = 2
-    textView.layer.borderColor = UIColor.gray.cgColor
-    textView.textColor = .white
-    textView.font = .systemFont(ofSize: 16)
-    textView.textContainerInset = UIEdgeInsets(
-        top: 15, left: 15, bottom: 10, right: 15)
+    button.translatesAutoresizingMaskIntoConstraints = false
 
-    textView.translatesAutoresizingMaskIntoConstraints = false
-
-    return textView
+    return button
 }()
-
-private let chooseAlertLabel: UILabel = {
-    let label = UILabel()
-    label.text = "Prefered alert type (you can choose both)"
-    label.textColor = .white
-    label.font = .systemFont(ofSize: 16)
-    label.numberOfLines = 0
-
-    label.translatesAutoresizingMaskIntoConstraints = false
-
-    return label
-}()
-
-private let alertStackView = AlertTypesStackView()
 
 private let navigationButtons = NavigationButtons()
 
-class CreateAccountStep3ViewController: UIViewController {
-
-    var step3UserModel : UserModel!
+class CreateAccountStep4ViewController: UIViewController {
+    
+    var step4UserModel : UserModel!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         //MARK: - Disabiling the Navigation Bar
         navigationController?.setNavigationBarHidden(true, animated: false)
-
-        tableViewSetUp()
-        textViewSetUp()
+        
+        // Add tap gesture recognizer to dismiss keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        
         UISetUp()
     }
     
-    @objc func nextButtonTapped() {
-        let vc = CreateAccountStep4ViewController()
-        vc.step4UserModel = self.step3UserModel
-        navigationController?.pushViewController(vc, animated: true)
+//    override func viewWillAppear(_ animated: Bool) {
+//        let handle = Auth.auth().addStateDidChangeListener { auth, user in
+//          // ...
+//        }
+//    }
+//    
+//    override func viewWillDisappear(_ animated: Bool) {
+//        Auth.auth().removeStateDidChangeListener(handle!)
+//    }
+
+    @objc func addEmergencyContactField() {
+        print("Ana dost add Contact")
+        emergencyContactsStackView.addArrangedSubview(createEmergencyContactTextField())
     }
-    
+
+    @objc func createAccountButtonTapped() {
+        _ = CreateAccountViewModel(with: step4UserModel, delegate: self)
+    }
+
     @objc func backButtonTapped() {
         navigationController?.popViewController(animated: true)
     }
 
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+
 }
 
-extension CreateAccountStep3ViewController {
+extension CreateAccountStep4ViewController {
 
     private func UISetUp() {
 
         view.addSubview(backgroundImage)
         view.addSubview(createAccountLabel)
         view.addSubview(progressBarView)
-        view.addSubview(selectDiseasesLabel)
-        view.addSubview(chronicDiseasesTableView)
-        view.addSubview(otherDiseases)
-        view.addSubview(chooseAlertLabel)
-        view.addSubview(alertStackView)
+        view.addSubview(emergencyContactsLabel)
+        view.addSubview(emergencyContactsStackView)
+        view.addSubview(addContactButton)
         view.addSubview(navigationButtons)
 
         //Background Image Constraints
         let backgroundImageConstraints = [
             backgroundImage.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImage.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            backgroundImage.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor),
-            backgroundImage.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor),
+            backgroundImage.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImage.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ]
 
         NSLayoutConstraint.activate(backgroundImageConstraints)
 
         //Step1 Label
         let setUpLabelConstraints = [
-            createAccountLabel.topAnchor.constraint(
-                equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            createAccountLabel.centerXAnchor.constraint(
-                equalTo: view.centerXAnchor),
+            createAccountLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            createAccountLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             createAccountLabel.heightAnchor.constraint(equalToConstant: 40),
         ]
 
@@ -160,176 +144,86 @@ extension CreateAccountStep3ViewController {
 
         //Progress Bar Constraints
         let progressBarConstraints = [
-            progressBarView.topAnchor.constraint(
-                equalTo: createAccountLabel.bottomAnchor, constant: 20),
-            progressBarView.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            progressBarView.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
+            progressBarView.topAnchor.constraint(equalTo: createAccountLabel.bottomAnchor, constant: 20),
+            progressBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            progressBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             progressBarView.heightAnchor.constraint(equalToConstant: 20),
         ]
 
         NSLayoutConstraint.activate(progressBarConstraints)
 
-        //Select Diseases Label Constraints
-        let selectDiseasesLabelConstraints = [
-            selectDiseasesLabel.topAnchor.constraint(
-                equalTo: progressBarView.bottomAnchor, constant: 5),
-            selectDiseasesLabel.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            selectDiseasesLabel.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
+        //Emergency Contacts Label Constraints
+        let emergencyContactsLabelConstraints = [
+            emergencyContactsLabel.topAnchor.constraint(equalTo: progressBarView.bottomAnchor, constant: 15),
+            emergencyContactsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+        ]
+        
+        //Main Emergency Contacts
+        if emergencyContactsStackView.arrangedSubviews.isEmpty {
+            emergencyContactsStackView.addArrangedSubview(createEmergencyContactTextField())
+            emergencyContactsStackView.addArrangedSubview(createEmergencyContactTextField())
+        }
+
+        NSLayoutConstraint.activate(emergencyContactsLabelConstraints)
+
+        //Emergency Contacts StackView
+        let emergencyContactsStackViewConstraints = [
+            emergencyContactsStackView.topAnchor.constraint(equalTo: emergencyContactsLabel.bottomAnchor, constant: 10),
+            emergencyContactsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            emergencyContactsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ]
 
-        NSLayoutConstraint.activate(selectDiseasesLabelConstraints)
+        NSLayoutConstraint.activate(emergencyContactsStackViewConstraints)
 
-        //Choronic Diseases TableView Constraints
-        let chronicDiseasesTableViewConstraints = [
-            chronicDiseasesTableView.topAnchor.constraint(
-                equalTo: selectDiseasesLabel.bottomAnchor, constant: 10),
-            chronicDiseasesTableView.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            chronicDiseasesTableView.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
-            chronicDiseasesTableView.heightAnchor.constraint(
-                equalToConstant: 310),
+        //Add Contact Button Constraints
+        let addContactButtonConstraints = [
+            addContactButton.topAnchor.constraint(equalTo: emergencyContactsStackView.bottomAnchor, constant: 10),
+            addContactButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            addContactButton.heightAnchor.constraint(equalToConstant: 40),
+            addContactButton.widthAnchor.constraint(equalToConstant: 150),
         ]
 
-        NSLayoutConstraint.activate(chronicDiseasesTableViewConstraints)
+        NSLayoutConstraint.activate(addContactButtonConstraints)
 
-        //Other Diseases TextField
-        let otherDiseasesTextFieldConstraint = [
-            otherDiseases.topAnchor.constraint(
-                equalTo: chronicDiseasesTableView.bottomAnchor, constant: 15),
-            otherDiseases.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            otherDiseases.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
-            otherDiseases.heightAnchor.constraint(equalToConstant: 70),
-        ]
 
-        NSLayoutConstraint.activate(otherDiseasesTextFieldConstraint)
-
-        //Choose Alert Label Constraints
-        let chooseAlertLabelConstraints = [
-            chooseAlertLabel.topAnchor.constraint(
-                equalTo: otherDiseases.bottomAnchor, constant: 15),
-            chooseAlertLabel.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            chooseAlertLabel.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
-            chooseAlertLabel.heightAnchor.constraint(equalToConstant: 20),
-        ]
-
-        NSLayoutConstraint.activate(chooseAlertLabelConstraints)
-
-        //Alert StackView Constraints
-        let alertStackViewConstraints = [
-            alertStackView.topAnchor.constraint(
-                equalTo: chooseAlertLabel.bottomAnchor, constant: 20),
-            alertStackView.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            alertStackView.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
-            alertStackView.heightAnchor.constraint(equalToConstant: 45),
-        ]
-
-        NSLayoutConstraint.activate(alertStackViewConstraints)
+        //Create Account Button
+        navigationButtons.nextButton.setTitle("Create account", for: .normal)
 
         //Navigation StackView Constraints
         let navgationButtonsStackViewConstraints = [
-            navigationButtons.bottomAnchor.constraint(
-                equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
-            navigationButtons.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            navigationButtons.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
+            navigationButtons.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+            navigationButtons.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            navigationButtons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             navigationButtons.heightAnchor.constraint(equalToConstant: 50),
         ]
 
         NSLayoutConstraint.activate(navgationButtonsStackViewConstraints)
 
-        //Navigation Buttons functions
+        //Buttons Functions
         // Remove any existing targets before adding a new one
+        addContactButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.backButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.nextButton.removeTarget(nil, action: nil, for: .allEvents)
+
         //Adding Button Functions
-        navigationButtons.nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
+        addContactButton.addTarget(self, action: #selector(addEmergencyContactField), for: .touchUpInside)
+        navigationButtons.nextButton.addTarget(self, action: #selector(createAccountButtonTapped),for: .touchUpInside)
         navigationButtons.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
+    }
+    
+    private func createEmergencyContactTextField() -> UITextField {
         
+        let textField = SignUpTextFields(placeholder: "Enter emergency contact", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
+        textField.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        return textField
     }
-}
-
-extension CreateAccountStep3ViewController: UITableViewDelegate,
-    UITableViewDataSource
-{
-
-    private func tableViewSetUp() {
-        chronicDiseasesTableView.delegate = self
-        chronicDiseasesTableView.dataSource = self
-    }
-
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)
-        -> Int
-    {
-        Constants.conditions.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
-        -> UITableViewCell
-    {
-        let cell = tableView.dequeueReusableCell(
-            withIdentifier: "cell", for: indexPath)
-        let condition = Constants.conditions[indexPath.row]
-        cell.accessoryType =
-            selectedConditions.contains(condition) ? .checkmark : .none
-        cell.textLabel?.textColor = .white
-        cell.backgroundColor = UIColor(named: Constants.signUpTextFieldsBackgroundColor)
-        cell.textLabel?.font = .systemFont(ofSize: 14)
-        cell.textLabel?.numberOfLines = 0
-        cell.textLabel?.text = condition
-        return cell
-    }
-
-    func tableView(
-        _ tableView: UITableView, didSelectRowAt indexPath: IndexPath
-    ) {
-        let condition = Constants.conditions[indexPath.row]
-        if selectedConditions.contains(condition) {
-            selectedConditions.remove(condition)
-        } else {
-            selectedConditions.insert(condition)
-        }
-        tableView.reloadRows(at: [indexPath], with: .automatic)
-    }
-
-}
-
-extension CreateAccountStep3ViewController: UITextViewDelegate {
-
-    private func textViewSetUp() {
-        otherDiseases.delegate = self
-    }
-
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == "Other" {
-            textView.text = ""
-        }
-        textView.textColor = .white
-    }
-
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            textView.text = "Other"
-            textView.textColor = UIColor.gray  // Restore placeholder color
-        }
-    }
+    
 }
 
 //MARK: - Preview
 //#if DEBUG
-//    #Preview("Sign Up 3 View") {
-//        CreateAccountStep3ViewController()
-//    }
+//#Preview("Sign Up 4"){
+//    CreateAccountStep4ViewController()
+//}
 //#endif
