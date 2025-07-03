@@ -10,6 +10,8 @@ import AudioToolbox
 import AVFoundation
 import Contacts
 import ContactsUI
+import FirebaseFirestore
+import FirebaseAuth
 
 // MARK: - UserDefaults Extension
 extension UserDefaults {
@@ -42,24 +44,10 @@ class SettingsViewController: UIViewController {
     // MARK: - Properties
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private var audioPlayer: AVAudioPlayer?
-    private let systemSounds: [(id: String, name: String)] = [
-        ("system_default", "Default Alert"),
-        ("system_1000", "Tink"),
-        ("system_1001", "Glass"),
-        ("system_1002", "Ladder"),
-        ("system_1003", "Minuet"),
-        ("system_1004", "News Flash"),
-        ("system_1006", "Suspense"),
-        ("system_1008", "Choo"),
-        ("system_1009", "Descending"),
-        ("system_1010", "Ascending"),
-        ("system_1013", "Notify"),
-        ("system_1014", "Tock"),
-        ("system_1016", "Whistle")
-    ]
     private var customSounds: [(id: String, name: String)] = []
     private var alarmSounds: [(id: String, name: String)] = []
     private var emergencyContacts: [[String: String]] = []
+    private let db = Firestore.firestore()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -74,9 +62,15 @@ class SettingsViewController: UIViewController {
         super.viewWillAppear(animated)
         loadCustomSounds()
         // Combine system sounds and custom sounds
-        alarmSounds = systemSounds + customSounds
+        alarmSounds = customSounds
         loadEmergencyContacts()
         tableView.reloadData()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        audioPlayer?.stop()
+        audioPlayer = nil
     }
     
     private func loadCustomSounds() {
@@ -105,11 +99,43 @@ class SettingsViewController: UIViewController {
     }
     
     private func loadEmergencyContacts() {
-        emergencyContacts = UserDefaults.standard.emergencyContacts
+        guard let user = Auth.auth().currentUser else { return }
+        
+        db.collection("users").document(user.uid).getDocument { [weak self] (document, error) in
+            if let error = error {
+                print("Error loading emergency contacts: \(error)")
+                return
+            }
+            
+            if let data = document?.data(),
+               let contacts = data["emergencyContacts"] as? [[String: String]] {
+                DispatchQueue.main.async {
+                    self?.emergencyContacts = contacts
+                    self?.tableView.reloadData()
+                }
+            } else {
+                // If no emergency contacts array exists, create one
+                self?.db.collection("users").document(user.uid).setData([
+                    "emergencyContacts": []
+                ], merge: true) { error in
+                    if let error = error {
+                        print("Error creating emergency contacts array: \(error)")
+                    }
+                }
+            }
+        }
     }
     
     private func saveEmergencyContacts() {
-        UserDefaults.standard.emergencyContacts = emergencyContacts
+        guard let user = Auth.auth().currentUser else { return }
+        
+        db.collection("users").document(user.uid).setData([
+            "emergencyContacts": emergencyContacts
+        ], merge: true) { error in
+            if let error = error {
+                print("Error saving emergency contacts: \(error)")
+            }
+        }
     }
     
     private func setupAudioSession() {
@@ -122,29 +148,24 @@ class SettingsViewController: UIViewController {
     }
     
     private func playSound(id: String) {
-        if id == "system_default" {
-            // Play the default system sound
-            AudioServicesPlaySystemSound(1304)
-        } else if id.hasPrefix("system_") {
-            // Extract the sound ID number
-            if let soundId = Int(id.replacingOccurrences(of: "system_", with: "")) {
-                // Play the system sound
-                AudioServicesPlaySystemSound(UInt32(soundId))
+        // To ensure only one sound plays at a time, all alarm sounds must be custom .wav or .mp3 files in the app bundle.
+        // System sounds (AudioServicesPlaySystemSound) cannot be stopped/interrupted, so we do not use them here.
+        audioPlayer?.stop()
+        audioPlayer = nil
+        // Try both .wav and .mp3 extensions for flexibility
+        let baseId = id.replacingOccurrences(of: ".wav", with: "").replacingOccurrences(of: ".mp3", with: "")
+        if let soundPath = Bundle.main.path(forResource: baseId, ofType: "wav") ?? Bundle.main.path(forResource: baseId, ofType: "mp3") {
+            let soundURL = URL(fileURLWithPath: soundPath)
+            do {
+                audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+                audioPlayer?.prepareToPlay()
+                audioPlayer?.volume = 1.0
+                audioPlayer?.play()
+            } catch {
+                print("Failed to play sound: \(error)")
             }
         } else {
-            // Play custom sound file
-            if let soundPath = Bundle.main.path(forResource: id.replacingOccurrences(of: ".wav", with: ""), ofType: "wav") {
-                let soundURL = URL(fileURLWithPath: soundPath)
-                
-                do {
-                    audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-                    audioPlayer?.prepareToPlay()
-                    audioPlayer?.volume = 1.0
-                    audioPlayer?.play()
-                } catch {
-                    print("Failed to play sound: \(error)")
-                }
-            }
+            print("Sound file not found: \(id)")
         }
     }
     

@@ -10,7 +10,7 @@ import AVFoundation
 import Vision
 import AudioToolbox
 
-class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
+class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, AVAudioPlayerDelegate {
     
     var sequencehandler = VNSequenceRequestHandler()
     var drowsyFrameCounter = 0
@@ -26,6 +26,9 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
     
     let startButton = UIButton(type: .system)
     let stopButton = UIButton(type: .system)
+    
+    var shouldRepeatAlarm = false
+    var isAlarmPlaying = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -235,62 +238,88 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
     }
     
     func playAlarm() {
-        // Stop any existing alarm
-        stopAlarm()
-        
-        // Get the selected sound from UserDefaults
+        if isAlarmPlaying { return }
+        isAlarmPlaying = true
+        shouldRepeatAlarm = true
         let selectedSound = UserDefaults.standard.selectedAlarmSound
-        
-        // Create a timer to play the alarm repeatedly
-        DispatchQueue.main.async {
-            self.alarmTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-                if selectedSound == "system_default" {
-                    // Play the default system sound
-                    AudioServicesPlaySystemSound(1304)
-                } else if selectedSound.hasPrefix("system_") {
-                    // Extract the sound ID number
-                    if let soundId = Int(selectedSound.replacingOccurrences(of: "system_", with: "")) {
-                        // Play the system sound
-                        AudioServicesPlaySystemSound(UInt32(soundId))
-                    }
-                } else {
-                    // Play custom sound
-                    self?.playCustomSound(filename: selectedSound)
-                }
-                // Vibrate the device
-                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-            // Make sure the timer fires immediately
-            self.alarmTimer?.fire()
-        }
+        print("Attempting to play alarm sound: \(selectedSound)")
+        playCustomSound(filename: selectedSound)
     }
     
     private func playCustomSound(filename: String) {
-        if let soundPath = Bundle.main.path(forResource: filename.replacingOccurrences(of: ".wav", with: ""), ofType: "wav") {
-            let soundURL = URL(fileURLWithPath: soundPath)
-            
+        audioPlayer?.stop()
+        audioPlayer = nil
+
+        DispatchQueue.main.async {
             do {
-                audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-                audioPlayer?.prepareToPlay()
-                audioPlayer?.volume = 1.0
-                audioPlayer?.play()
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.duckOthers])
+                try AVAudioSession.sharedInstance().setActive(true)
             } catch {
-                print("Failed to play sound: \(error)")
+                print("Failed to set up audio session for alarm: \(error)")
             }
+
+            let url: URL?
+            if let dotIndex = filename.lastIndex(of: ".") {
+                let name = String(filename[..<dotIndex])
+                let ext = String(filename[filename.index(after: dotIndex)...])
+                if let path = Bundle.main.path(forResource: name, ofType: ext) {
+                    url = URL(fileURLWithPath: path)
+                } else {
+                    url = nil
+                }
+            } else {
+                if let path = Bundle.main.path(forResource: filename, ofType: "wav") ?? Bundle.main.path(forResource: filename, ofType: "mp3") {
+                    url = URL(fileURLWithPath: path)
+                } else {
+                    url = nil
+                }
+            }
+
+            if let soundURL = url {
+                print("Playing sound at path: \(soundURL.path)")
+                do {
+                    self.audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+                    self.audioPlayer?.delegate = self
+                    self.audioPlayer?.prepareToPlay()
+                    self.audioPlayer?.volume = 1.0
+                    self.audioPlayer?.play()
+                } catch {
+                    print("Failed to play sound: \(error)")
+                    // Fallback: play a system vibration
+                    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+                }
+            } else {
+                print("Sound file not found: \(filename)")
+                // Fallback: play a system vibration
+                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+            }
+        }
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        // Repeat the alarm if drowsiness is still detected
+        if shouldRepeatAlarm && isAlarmPlaying {
+            let selectedSound = UserDefaults.standard.selectedAlarmSound
+            playCustomSound(filename: selectedSound)
         }
     }
     
     func stopAlarm() {
+        if !isAlarmPlaying { return }
+        isAlarmPlaying = false
+        shouldRepeatAlarm = false
         DispatchQueue.main.async {
             self.alarmTimer?.invalidate()
             self.alarmTimer = nil
+            self.audioPlayer?.stop()
+            self.audioPlayer = nil
         }
     }
     
     func stopCamera() {
         session?.stopRunning()
         session = nil
-        
+        stopAlarm()
         DispatchQueue.main.async {
             self.previewLayer.removeFromSuperlayer()
             UIView.animate(withDuration: 0.3) {
