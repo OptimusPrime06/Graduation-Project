@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		5C3315B62DA1669B00DFD19E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 5C3315B52DA1669B00DFD19E /* FirebaseAuth */; };
 		5C3315B82DA1670000DFD19E /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 5C3315B72DA1670000DFD19E /* FirebaseFirestore */; };
+		5CB6FB4F2E16BDE500648045 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 5CB6FB4E2E16BDE500648045 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 			files = (
 				5C3315B62DA1669B00DFD19E /* FirebaseAuth in Frameworks */,
 				5C3315B82DA1670000DFD19E /* FirebaseFirestore in Frameworks */,
+				5CB6FB4F2E16BDE500648045 /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +97,7 @@
 			packageProductDependencies = (
 				5C3315B52DA1669B00DFD19E /* FirebaseAuth */,
 				5C3315B72DA1670000DFD19E /* FirebaseFirestore */,
+				5CB6FB4E2E16BDE500648045 /* FirebaseStorage */,
 			);
 			productName = GP;
 			productReference = 5CCD82292D75D1B300A504AA /* GP.app */;
@@ -397,6 +400,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5C3315B32DA15EEC00DFD19E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		5CB6FB4E2E16BDE500648045 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5C3315B32DA15EEC00DFD19E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
