@@ -61,4 +61,4 @@ Carthage/Build/
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
-fastlane/test_outputGP.xcodeproj/project.xcworkspace/xcuserdata/
+fastlane/test_output

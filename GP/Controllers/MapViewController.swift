@@ -104,8 +104,8 @@ extension MapViewController {
         searchIconButton.tintColor = .gray
         searchIconButton.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
         searchIconButton.addTarget(self, action: #selector(searchButtonTapped), for: .touchUpInside)
-        searchField.rightView = searchIconButton
-        searchField.rightViewMode = .always
+        searchIconButton.translatesAutoresizingMaskIntoConstraints = false
+
         
         // Configure results table
         resultsTableView.translatesAutoresizingMaskIntoConstraints = false
@@ -116,6 +116,7 @@ extension MapViewController {
         
         // Add views
         view.addSubview(searchField)
+        view.addSubview(searchIconButton)
         view.addSubview(resultsTableView)
         view.addSubview(routeInfoLabel)
         view.addSubview(startMonitoringButton)
@@ -125,6 +126,11 @@ extension MapViewController {
             searchField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             searchField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             searchField.heightAnchor.constraint(equalToConstant: 40),
+            
+            
+            searchIconButton.topAnchor.constraint(equalTo: searchField.topAnchor),
+            searchIconButton.bottomAnchor.constraint(equalTo: searchField.bottomAnchor),
+            searchIconButton.trailingAnchor.constraint(equalTo: searchField.trailingAnchor, constant: -10),
             
             resultsTableView.topAnchor.constraint(equalTo: searchField.bottomAnchor),
             resultsTableView.leadingAnchor.constraint(equalTo: searchField.leadingAnchor),
