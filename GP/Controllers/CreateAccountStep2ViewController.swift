@@ -58,24 +58,6 @@ private let chronicDiseasesTableView: UITableView = {
     return tableView
 }()
 
-private let otherDiseases: UITextView = {
-
-    let textView = UITextView()
-    textView.text = "Other"
-    textView.textColor = .gray
-    textView.backgroundColor = UIColor(named: "signUpTextFieldBackgroundColor")
-    textView.layer.cornerRadius = 8
-    textView.layer.borderWidth = 2
-    textView.layer.borderColor = UIColor.gray.cgColor
-    textView.textColor = .white
-    textView.font = .systemFont(ofSize: 16)
-    textView.textContainerInset = UIEdgeInsets(
-        top: 15, left: 15, bottom: 10, right: 15)
-
-    textView.translatesAutoresizingMaskIntoConstraints = false
-
-    return textView
-}()
 
 private let chooseAlertLabel: UILabel = {
     let label = UILabel()
@@ -93,9 +75,9 @@ private let alertStackView = AlertTypesStackView()
 
 private let navigationButtons = NavigationButtons()
 
-class CreateAccountStep3ViewController: UIViewController {
+class CreateAccountStep2ViewController: UIViewController {
 
-    var step3UserModel : UserModel!
+    var step2UserModel : UserModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -108,13 +90,20 @@ class CreateAccountStep3ViewController: UIViewController {
         view.addGestureRecognizer(tapGesture)
 
         tableViewSetUp()
-        textViewSetUp()
         UISetUp()
     }
     
     @objc func nextButtonTapped() {
-        let vc = CreateAccountStep4ViewController()
-        vc.step4UserModel = self.step3UserModel
+        
+        let vc = CreateAccountStep3ViewController()
+        vc.step3UserModel = UserModel(name: step2UserModel.name,
+                                      email: step2UserModel.email,
+                                      password: step2UserModel.password,
+                                      age: step2UserModel.age,
+                                      gender: step2UserModel.gender,
+                                      experience: step2UserModel.experience,
+                                      choronicDiseases: Array(selectedConditions)
+        )
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -128,7 +117,7 @@ class CreateAccountStep3ViewController: UIViewController {
 
 }
 
-extension CreateAccountStep3ViewController {
+extension CreateAccountStep2ViewController {
 
     private func UISetUp() {
 
@@ -137,7 +126,6 @@ extension CreateAccountStep3ViewController {
         view.addSubview(progressBarView)
         view.addSubview(selectDiseasesLabel)
         view.addSubview(chronicDiseasesTableView)
-        view.addSubview(otherDiseases)
         view.addSubview(chooseAlertLabel)
         view.addSubview(alertStackView)
         view.addSubview(navigationButtons)
@@ -204,23 +192,10 @@ extension CreateAccountStep3ViewController {
 
         NSLayoutConstraint.activate(chronicDiseasesTableViewConstraints)
 
-        //Other Diseases TextField
-        let otherDiseasesTextFieldConstraint = [
-            otherDiseases.topAnchor.constraint(
-                equalTo: chronicDiseasesTableView.bottomAnchor, constant: 15),
-            otherDiseases.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor, constant: 20),
-            otherDiseases.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor, constant: -20),
-            otherDiseases.heightAnchor.constraint(equalToConstant: 70),
-        ]
-
-        NSLayoutConstraint.activate(otherDiseasesTextFieldConstraint)
-
         //Choose Alert Label Constraints
         let chooseAlertLabelConstraints = [
             chooseAlertLabel.topAnchor.constraint(
-                equalTo: otherDiseases.bottomAnchor, constant: 15),
+                equalTo: chronicDiseasesTableView.bottomAnchor, constant: 15),
             chooseAlertLabel.leadingAnchor.constraint(
                 equalTo: view.leadingAnchor, constant: 20),
             chooseAlertLabel.trailingAnchor.constraint(
@@ -267,9 +242,7 @@ extension CreateAccountStep3ViewController {
     }
 }
 
-extension CreateAccountStep3ViewController: UITableViewDelegate,
-    UITableViewDataSource
-{
+extension CreateAccountStep2ViewController: UITableViewDelegate, UITableViewDataSource {
 
     private func tableViewSetUp() {
         chronicDiseasesTableView.delegate = self
@@ -309,34 +282,25 @@ extension CreateAccountStep3ViewController: UITableViewDelegate,
         }
         tableView.reloadRows(at: [indexPath], with: .automatic)
     }
-
-}
-
-extension CreateAccountStep3ViewController: UITextViewDelegate {
-
-    private func textViewSetUp() {
-        otherDiseases.delegate = self
-    }
-
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == "Other" {
-            textView.text = ""
-        }
-        textView.textColor = .white
-    }
-
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            textView.text = "Other"
-            textView.textColor = UIColor.gray  // Restore placeholder color
+    
+    private func checkAlarmType() -> AlarmType? {
+        
+        if alertStackView.lightCheckBox.isSelected && alertStackView.soundCheckBox.isSelected {
+            return .both
+        } else if alertStackView.lightCheckBox.isSelected {
+            return .flash
+        } else if alertStackView.soundCheckBox.isSelected {
+            return .sound
+        } else {
+            return nil
         }
     }
+
 }
 
 //MARK: - Preview
 //#if DEBUG
-//    #Preview("Sign Up 3 View") {
-//        CreateAccountStep3ViewController()
+//    #Preview("Sign Up 2 View") {
+//        CreateAccountStep2ViewController()
 //    }
 //#endif

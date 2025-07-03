@@ -64,9 +64,9 @@ private let addContactButton: UIButton = {
 
 private let navigationButtons = NavigationButtons()
 
-class CreateAccountStep4ViewController: UIViewController {
+class CreateAccountStep3ViewController: UIViewController {
     
-    var step4UserModel : UserModel!
+    var step3UserModel : UserModel!
     
     
     override func viewDidLoad() {
@@ -98,7 +98,7 @@ class CreateAccountStep4ViewController: UIViewController {
     }
 
     @objc func createAccountButtonTapped() {
-        _ = CreateAccountViewModel(with: step4UserModel, delegate: self)
+        _ = CreateAccountViewModel(with: step3UserModel, delegate: self)
     }
 
     @objc func backButtonTapped() {
@@ -111,7 +111,7 @@ class CreateAccountStep4ViewController: UIViewController {
 
 }
 
-extension CreateAccountStep4ViewController {
+extension CreateAccountStep3ViewController {
 
     private func UISetUp() {
 

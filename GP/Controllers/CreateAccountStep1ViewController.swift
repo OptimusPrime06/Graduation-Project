@@ -80,6 +80,8 @@ private let femaleGenderButton: UIButton = {
     return femaleGenderButton
 }()
 
+var gender: Gender = .unspecified
+
 private let genderStackView: UIStackView = {
     let genderStackView = UIStackView()
     genderStackView.axis = .horizontal
@@ -142,8 +144,8 @@ private let navigationButtons = NavigationButtons()
 
 class CreateAccountStep1ViewController: UIViewController {
     
-    var step1UserModel = UserModel()
-    
+   
+        
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -158,11 +160,16 @@ class CreateAccountStep1ViewController: UIViewController {
     }
     
     @objc func nextButtonTapped() {
-        if emailTextField.text != "" || passwordTextField.text != "" {
-            step1UserModel.setEmail(emailTextField.text!)
-            step1UserModel.setPassword(passwordTextField.text!)
+        if nameTextField.text != "" || emailTextField.text != "" || passwordTextField.text != "" || ageTextField.text != "" || gender != .unspecified || driverExperiencDropDownMenu.currentTitle != "" {
+            let step1UserModel = UserModel(name: nameTextField.text!,
+                                           email: emailTextField.text!,
+                                           password: passwordTextField.text!,
+                                           age: Int(ageTextField.text!),
+                                           gender: gender,
+                                           experience: driverExperiencDropDownMenu.currentTitle!
+            )
             let vc = CreateAccountStep3ViewController()
-            vc.step3UserModel = self.step1UserModel
+            vc.step3UserModel = step1UserModel
             navigationController?.pushViewController(vc, animated: true)
         } else {
             let alert = UIAlertController(title: "Missing Info", message: "email or password is empty", preferredStyle: .alert)
@@ -188,9 +195,9 @@ class CreateAccountStep1ViewController: UIViewController {
         
         // Store the selected gender
         if sender == maleGenderButton {
-            step1UserModel.setGender("Male")
+            gender = .Male
         } else {
-            step1UserModel.setGender("Female")
+            gender = .Female
         }
     }
     

@@ -9,8 +9,8 @@ import UIKit
 
 final class AlertTypesStackView: UIStackView {
     
-    let checkBox1 = CheckBoxButton()
-    let checkBox2 = CheckBoxButton()
+    let soundCheckBox = CheckBoxButton()
+    let lightCheckBox = CheckBoxButton()
     
     private let soundAlertImage : UIImageView = {
         let imageView = UIImageView(image: UIImage(systemName: "speaker.wave.3"))
@@ -92,12 +92,12 @@ final class AlertTypesStackView: UIStackView {
         self.translatesAutoresizingMaskIntoConstraints = false
         
         //Sound StackView Set Up
-        soundAlertStackView.addArrangedSubview(checkBox1)
+        soundAlertStackView.addArrangedSubview(soundCheckBox)
         soundAlertStackView.addArrangedSubview(soundAlertImage)
         soundAlertStackView.addArrangedSubview(soundAlertLabel)
         
         //light StackView Set Up
-        lightAlertStackView.addArrangedSubview(checkBox2)
+        lightAlertStackView.addArrangedSubview(lightCheckBox)
         lightAlertStackView.addArrangedSubview(lightAlertImage)
         lightAlertStackView.addArrangedSubview(lightAlertLabel)
         
