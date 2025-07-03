@@ -1,78 +1,120 @@
 //
-//  CreateAccountStep2ViewController.swift
+//  CreateAccountStep3ViewController.swift
 //  GP
 //
-//  Created by Gulliver Raed on 3/24/25.
+//  Created by Gulliver Raed on 3/25/25.
 //
 
 import UIKit
-import AVKit
-import MobileCoreServices
 
 private let backgroundImage = BackgroundImageView()
 
 private let createAccountLabel = StepNumberLabel(stepNumber: 2)
 
 private let progressBarView: SegmentedBarView = {
-    let progressView = SegmentedBarView()
+
+    let progressBarView = SegmentedBarView()
     let colors = [
         UIColor(named: Constants.previousPageColor)!,
         UIColor(named: Constants.currentPageColor)!,
-        UIColor(named: Constants.nextPageColor)!,
         UIColor(named: Constants.nextPageColor)!
     ]
-    let progressViewModel = SegmentedBarView.Model(colors: colors, spacing: 12)
-    progressView.setModel(progressViewModel)
-    
-    progressView.translatesAutoresizingMaskIntoConstraints = false
-    
-    return progressView
+    let progressViewModel = SegmentedBarView.Model(
+        colors: colors, spacing: 12
+    )
+    progressBarView.setModel(progressViewModel)
+
+    progressBarView.translatesAutoresizingMaskIntoConstraints = false
+
+    return progressBarView
 }()
 
-private let videoPreview: UIImageView = {
-    let imageView = UIImageView()
-    imageView.backgroundColor = .black // Placeholder for video preview
-    imageView.contentMode = .scaleAspectFit
-    imageView.layer.cornerRadius = 12
-    imageView.clipsToBounds = true
-    
-    imageView.translatesAutoresizingMaskIntoConstraints = false
-    
-    return imageView
+private let selectDiseasesLabel: UILabel = {
+
+    let label = UILabel()
+    label.text = "Select from these choronic diseases if you have any ( tap on disease to mark it )"
+    label.textColor = .white
+    label.font = .systemFont(ofSize: 18)
+    label.numberOfLines = 3
+
+    label.translatesAutoresizingMaskIntoConstraints = false
+
+    return label
 }()
 
-private let recordVideoButton: UIButton = {
-    let button = UIButton(type: .system)
-    button.setTitle("Record Video", for: .normal)
-    button.backgroundColor = .systemRed
-    button.setTitleColor(.white, for: .normal)
-    button.layer.cornerRadius = 12
-    
-    button.translatesAutoresizingMaskIntoConstraints = false
-    
-    return button
+private var selectedConditions: Set<String> = []
+
+private let chronicDiseasesTableView: UITableView = {
+    let tableView = UITableView()
+    tableView.layer.borderWidth = 2
+    tableView.layer.borderColor = UIColor.gray.cgColor
+    tableView.layer.cornerRadius = 5
+
+    tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+    tableView.allowsMultipleSelection = true
+
+    tableView.translatesAutoresizingMaskIntoConstraints = false
+
+    return tableView
 }()
+
+private let otherDiseases: UITextView = {
+
+    let textView = UITextView()
+    textView.text = "Other"
+    textView.textColor = .gray
+    textView.backgroundColor = UIColor(named: "signUpTextFieldBackgroundColor")
+    textView.layer.cornerRadius = 8
+    textView.layer.borderWidth = 2
+    textView.layer.borderColor = UIColor.gray.cgColor
+    textView.textColor = .white
+    textView.font = .systemFont(ofSize: 16)
+    textView.textContainerInset = UIEdgeInsets(
+        top: 15, left: 15, bottom: 10, right: 15)
+
+    textView.translatesAutoresizingMaskIntoConstraints = false
+
+    return textView
+}()
+
+private let chooseAlertLabel: UILabel = {
+    let label = UILabel()
+    label.text = "Prefered alert type (you can choose both)"
+    label.textColor = .white
+    label.font = .systemFont(ofSize: 16)
+    label.numberOfLines = 0
+
+    label.translatesAutoresizingMaskIntoConstraints = false
+
+    return label
+}()
+
+private let alertStackView = AlertTypesStackView()
 
 private let navigationButtons = NavigationButtons()
 
+class CreateAccountStep3ViewController: UIViewController {
 
-class CreateAccountStep2ViewController: UIViewController {
-
-    private var videoURL: URL?
-    var step2UserModel : UserModel!
+    var step3UserModel : UserModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         //MARK: - Disabiling the Navigation Bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
+        // Add tap gesture recognizer to dismiss keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+
+        tableViewSetUp()
+        textViewSetUp()
         UISetUp()
     }
     
     @objc func nextButtonTapped() {
-        let vc = CreateAccountStep3ViewController()
-        vc.step3UserModel = self.step2UserModel
+        let vc = CreateAccountStep4ViewController()
+        vc.step4UserModel = self.step3UserModel
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -80,213 +122,221 @@ class CreateAccountStep2ViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
 
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+
 }
 
-extension CreateAccountStep2ViewController {
-    
+extension CreateAccountStep3ViewController {
+
     private func UISetUp() {
+
         view.addSubview(backgroundImage)
         view.addSubview(createAccountLabel)
         view.addSubview(progressBarView)
-        view.addSubview(videoPreview)
-        view.addSubview(recordVideoButton)
+        view.addSubview(selectDiseasesLabel)
+        view.addSubview(chronicDiseasesTableView)
+        view.addSubview(otherDiseases)
+        view.addSubview(chooseAlertLabel)
+        view.addSubview(alertStackView)
         view.addSubview(navigationButtons)
-        
-        
 
-        // Background Image Constraints
+        //Background Image Constraints
         let backgroundImageConstraints = [
             backgroundImage.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImage.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            backgroundImage.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backgroundImage.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            backgroundImage.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor),
+            backgroundImage.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor),
         ]
-        
+
         NSLayoutConstraint.activate(backgroundImageConstraints)
-        
-        //Step 2 Label Constraints
-        let createAccountLabelConstraints = [
-            createAccountLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            createAccountLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            createAccountLabel.heightAnchor.constraint(equalToConstant: 40)
+
+        //Step1 Label
+        let setUpLabelConstraints = [
+            createAccountLabel.topAnchor.constraint(
+                equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            createAccountLabel.centerXAnchor.constraint(
+                equalTo: view.centerXAnchor),
+            createAccountLabel.heightAnchor.constraint(equalToConstant: 40),
         ]
-        
-        NSLayoutConstraint.activate(createAccountLabelConstraints)
-        
+
+        NSLayoutConstraint.activate(setUpLabelConstraints)
+
         //Progress Bar Constraints
         let progressBarConstraints = [
-            progressBarView.topAnchor.constraint(equalTo: createAccountLabel.bottomAnchor, constant: 30),
-            progressBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            progressBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            progressBarView.heightAnchor.constraint(equalToConstant: 20)
+            progressBarView.topAnchor.constraint(
+                equalTo: createAccountLabel.bottomAnchor, constant: 20),
+            progressBarView.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            progressBarView.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
+            progressBarView.heightAnchor.constraint(equalToConstant: 20),
         ]
-        
+
         NSLayoutConstraint.activate(progressBarConstraints)
-        
-        //Video Preview ImageView Constraints
-        let videoPreviewConstraints = [
-            videoPreview.topAnchor.constraint(equalTo: progressBarView.bottomAnchor, constant: 20),
-            videoPreview.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            videoPreview.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            videoPreview.heightAnchor.constraint(equalToConstant: 450)
+
+        //Select Diseases Label Constraints
+        let selectDiseasesLabelConstraints = [
+            selectDiseasesLabel.topAnchor.constraint(
+                equalTo: progressBarView.bottomAnchor, constant: 5),
+            selectDiseasesLabel.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            selectDiseasesLabel.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
         ]
-        
-        NSLayoutConstraint.activate(videoPreviewConstraints)
-        
-        //Recorde Video Button
-        let recordVideoButtonConstraints = [
-            recordVideoButton.topAnchor.constraint(equalTo: videoPreview.bottomAnchor, constant: 30),
-            recordVideoButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            recordVideoButton.widthAnchor.constraint(equalToConstant: 150),
-            recordVideoButton.heightAnchor.constraint(equalToConstant: 50)
+
+        NSLayoutConstraint.activate(selectDiseasesLabelConstraints)
+
+        //Choronic Diseases TableView Constraints
+        let chronicDiseasesTableViewConstraints = [
+            chronicDiseasesTableView.topAnchor.constraint(
+                equalTo: selectDiseasesLabel.bottomAnchor, constant: 10),
+            chronicDiseasesTableView.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            chronicDiseasesTableView.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
+            chronicDiseasesTableView.heightAnchor.constraint(
+                equalToConstant: 310),
         ]
-        
-        NSLayoutConstraint.activate(recordVideoButtonConstraints)
-        
-        // Navigation Buttons
-        let navigationButtonsStacViewConstraints = [
+
+        NSLayoutConstraint.activate(chronicDiseasesTableViewConstraints)
+
+        //Other Diseases TextField
+        let otherDiseasesTextFieldConstraint = [
+            otherDiseases.topAnchor.constraint(
+                equalTo: chronicDiseasesTableView.bottomAnchor, constant: 15),
+            otherDiseases.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            otherDiseases.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
+            otherDiseases.heightAnchor.constraint(equalToConstant: 70),
+        ]
+
+        NSLayoutConstraint.activate(otherDiseasesTextFieldConstraint)
+
+        //Choose Alert Label Constraints
+        let chooseAlertLabelConstraints = [
+            chooseAlertLabel.topAnchor.constraint(
+                equalTo: otherDiseases.bottomAnchor, constant: 15),
+            chooseAlertLabel.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            chooseAlertLabel.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
+            chooseAlertLabel.heightAnchor.constraint(equalToConstant: 20),
+        ]
+
+        NSLayoutConstraint.activate(chooseAlertLabelConstraints)
+
+        //Alert StackView Constraints
+        let alertStackViewConstraints = [
+            alertStackView.topAnchor.constraint(
+                equalTo: chooseAlertLabel.bottomAnchor, constant: 20),
+            alertStackView.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            alertStackView.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
+            alertStackView.heightAnchor.constraint(equalToConstant: 45),
+        ]
+
+        NSLayoutConstraint.activate(alertStackViewConstraints)
+
+        //Navigation StackView Constraints
+        let navgationButtonsStackViewConstraints = [
             navigationButtons.bottomAnchor.constraint(
                 equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
-            navigationButtons.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            navigationButtons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            navigationButtons.heightAnchor.constraint(equalToConstant: 50)
+            navigationButtons.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            navigationButtons.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20),
+            navigationButtons.heightAnchor.constraint(equalToConstant: 50),
         ]
-        
-        NSLayoutConstraint.activate(navigationButtonsStacViewConstraints)
-        
-        
+
+        NSLayoutConstraint.activate(navgationButtonsStackViewConstraints)
+
+        //Navigation Buttons functions
         // Remove any existing targets before adding a new one
-        recordVideoButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.backButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.nextButton.removeTarget(nil, action: nil, for: .allEvents)
-        
-        
         //Adding Button Functions
-        recordVideoButton.addTarget(self, action: #selector(recordVideo), for: .touchUpInside)
         navigationButtons.nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
         navigationButtons.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
         
     }
-    
 }
 
-//MARK: - Recording & Displaying Video
-extension CreateAccountStep2ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    
-    @objc private func recordVideo() {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.mediaTypes = [UTType.movie.identifier]
-        picker.videoQuality = .typeMedium
-        picker.cameraDevice = .front    // front camera
-        picker.delegate = self
-        present(picker, animated: true)
+extension CreateAccountStep3ViewController: UITableViewDelegate,
+    UITableViewDataSource
+{
+
+    private func tableViewSetUp() {
+        chronicDiseasesTableView.delegate = self
+        chronicDiseasesTableView.dataSource = self
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        if let videoURL = info[.mediaURL] as? URL {
-            self.videoURL = videoURL
-            generateThumbnail(from: videoURL)
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)
+        -> Int
+    {
+        Constants.conditions.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
+        -> UITableViewCell
+    {
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: "cell", for: indexPath)
+        let condition = Constants.conditions[indexPath.row]
+        cell.accessoryType =
+            selectedConditions.contains(condition) ? .checkmark : .none
+        cell.textLabel?.textColor = .white
+        cell.backgroundColor = UIColor(named: Constants.signUpTextFieldsBackgroundColor)
+        cell.textLabel?.font = .systemFont(ofSize: 14)
+        cell.textLabel?.numberOfLines = 0
+        cell.textLabel?.text = condition
+        return cell
+    }
+
+    func tableView(
+        _ tableView: UITableView, didSelectRowAt indexPath: IndexPath
+    ) {
+        let condition = Constants.conditions[indexPath.row]
+        if selectedConditions.contains(condition) {
+            selectedConditions.remove(condition)
+        } else {
+            selectedConditions.insert(condition)
         }
-        dismiss(animated: true)
+        tableView.reloadRows(at: [indexPath], with: .automatic)
     }
 
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true)
+}
+
+extension CreateAccountStep3ViewController: UITextViewDelegate {
+
+    private func textViewSetUp() {
+        otherDiseases.delegate = self
     }
 
-    private func generateThumbnail(from url: URL) {
-        let asset = AVURLAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        let time = CMTime(seconds: 1, preferredTimescale: 600)
-
-        DispatchQueue.global().async {
-            if let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) {
-                let thumbnail = UIImage(cgImage: cgImage)
-                DispatchQueue.main.async {
-                    videoPreview.image = thumbnail
-                    self.addPlayButton()
-                }
-            }
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        if textView.text == "Other" {
+            textView.text = ""
         }
+        textView.textColor = .white
     }
 
-    private func addPlayButton() {
-        let playButton = UIButton(type: .custom)
-        playButton.setImage(UIImage(systemName: "play.circle.fill"), for: .normal)
-        playButton.tintColor = .white
-        playButton.frame = CGRect(x: 0, y: 0, width: 50, height: 50)
-        playButton.center = CGPoint(x: videoPreview.bounds.width / 2, y: videoPreview.bounds.height / 2)
-        playButton.addTarget(self, action: #selector(playVideo), for: .touchUpInside)
-        videoPreview.addSubview(playButton)
-    }
-
-    @objc private func playVideo() {
-        guard let videoURL = videoURL else { return }
-        let player = AVPlayer(url: videoURL)
-        let playerVC = AVPlayerViewController()
-        playerVC.player = player
-        present(playerVC, animated: true) {
-            player.play()
+    func textViewDidEndEditing(_ textView: UITextView) {
+        if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
+            textView.text = "Other"
+            textView.textColor = UIColor.gray  // Restore placeholder color
         }
     }
 }
-
-//let requestedTime = time
-//
-//generator.generateCGImageAsynchronously(for: requestedTime) { cgImage, actualTime, result, error in
-//    if let cgImage = cgImage, error == nil {
-//        let thumbnail = UIImage(cgImage: cgImage)
-//        DispatchQueue.main.async {
-//            videoPreview.image = thumbnail
-//            self.addPlayButton()
-//        }
-//    } else {
-//        print("Failed to generate thumbnail: \(error?.localizedDescription ?? "Unknown error")")
-//    }
-//}
-
-//MARK: - Code for this warning error for ios > 18
-
-//private func generateThumbnail(from url: URL) {
-//    let asset = AVURLAsset(url: url)
-//    let generator = AVAssetImageGenerator(asset: asset)
-//    generator.appliesPreferredTrackTransform = true
-//    let time = CMTime(seconds: 1, preferredTimescale: 600)
-//    
-//    if #available(iOS 18.0, *) {
-//        let times = [NSValue(time: time)]
-//        generator.generateCGImagesAsynchronously(forTimes: times) { _, cgImage, _, _, error in
-//            if let cgImage = cgImage, error == nil {
-//                let thumbnail = UIImage(cgImage: cgImage)
-//                DispatchQueue.main.async {
-//                    self.videoPreview.image = thumbnail
-//                    self.addPlayButton()
-//                }
-//            } else if let error = error {
-//                print("Failed to generate thumbnail: \(error.localizedDescription)")
-//            }
-//        }
-//    } else {
-//        DispatchQueue.global().async {
-//            if let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) {
-//                let thumbnail = UIImage(cgImage: cgImage)
-//                DispatchQueue.main.async {
-//                    self.videoPreview.image = thumbnail
-//                    self.addPlayButton()
-//                }
-//            } else {
-//                print("Failed to generate thumbnail (iOS <18)")
-//            }
-//        }
-//    }
-//}
-
 
 //MARK: - Preview
 //#if DEBUG
-//    #Preview("Sign Up 2 View") {
-//        CreateAccountStep2ViewController()
+//    #Preview("Sign Up 3 View") {
+//        CreateAccountStep3ViewController()
 //    }
 //#endif

@@ -19,7 +19,6 @@ private let progressBarView: SegmentedBarView = {
     let colors = [
         UIColor(named: Constants.currentPageColor)!,
         UIColor(named: Constants.nextPageColor)!,
-        UIColor(named: Constants.nextPageColor)!,
         UIColor(named: Constants.nextPageColor)!
     ]
     let progressViewModel = SegmentedBarView.Model(
@@ -151,15 +150,19 @@ class CreateAccountStep1ViewController: UIViewController {
         //MARK: - Disabiling the Navigation Bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
+        // Add tap gesture recognizer to dismiss keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        
         UISetUp()
     }
     
     @objc func nextButtonTapped() {
-        let vc = CreateAccountStep2ViewController()
         if emailTextField.text != "" || passwordTextField.text != "" {
             step1UserModel.setEmail(emailTextField.text!)
             step1UserModel.setPassword(passwordTextField.text!)
-            vc.step2UserModel = self.step1UserModel
+            let vc = CreateAccountStep3ViewController()
+            vc.step3UserModel = self.step1UserModel
             navigationController?.pushViewController(vc, animated: true)
         } else {
             let alert = UIAlertController(title: "Missing Info", message: "email or password is empty", preferredStyle: .alert)
@@ -189,6 +192,10 @@ class CreateAccountStep1ViewController: UIViewController {
         } else {
             step1UserModel.setGender("Female")
         }
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
 }
 
