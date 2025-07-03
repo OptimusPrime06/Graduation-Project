@@ -8,19 +8,29 @@
 import Foundation
 
 class UserModel {
-    
+
+    // MARK: - User Basic Info
     private var name: String?
     private var email: String?
-    private var password: String? {
-        return updatablePassword
-    }
-    var updatablePassword : String?
+    private var updatablePassword: String?
     private var age: Int?
     private var gender: String?
     private var experience: String?
+
+    // MARK: - Face Recognition Data
     private var userFaceInput: Data?
+
+    // MARK: - Alerts
     private var alertType: String?
-    private var emergencyPhoneNum: [String?] = []
+    private var preferredAlerts: [String] = []
+
+    // MARK: - Health Info
+    private var diseases: String?
+    private var conditions: [String] = []
+    private var otherConditions: String?
+
+    // MARK: - Emergency Contacts
+    private var emergencyContacts: [[String: String]] = []
 
     // MARK: - Getters
 
@@ -30,6 +40,10 @@ class UserModel {
 
     func getEmail() -> String? {
         return email
+    }
+
+    func getPassword() -> String? {
+        return updatablePassword
     }
 
     func getAge() -> Int? {
@@ -52,10 +66,25 @@ class UserModel {
         return alertType
     }
 
-    func getEmergencyNumbers() -> [String?] {
-        return emergencyPhoneNum
+    func getPreferredAlerts() -> [String] {
+        return preferredAlerts
     }
 
+    func getDiseases() -> String? {
+        return diseases
+    }
+
+    func getConditions() -> [String] {
+        return conditions
+    }
+
+    func getOtherConditions() -> String? {
+        return otherConditions
+    }
+
+    func getEmergencyContacts() -> [[String: String]] {
+        return emergencyContacts
+    }
 
     // MARK: - Setters
 
@@ -65,6 +94,10 @@ class UserModel {
 
     func setEmail(_ email: String) {
         self.email = email
+    }
+
+    func setPassword(_ newPassword: String) {
+        self.updatablePassword = newPassword
     }
 
     func setAge(_ age: Int) {
@@ -87,25 +120,23 @@ class UserModel {
         self.alertType = alert
     }
 
-    func setEmergencyNumbers(_ numbers: [String?]) {
-        self.emergencyPhoneNum = numbers
+    func setPreferredAlerts(_ alerts: [String]) {
+        self.preferredAlerts = alerts
     }
 
-    func updateEmergencyNumber(_ number: String, at index: Int) {
-        if index < emergencyPhoneNum.count {
-            emergencyPhoneNum[index] = number
-        } else {
-            // Add empty slots if needed
-            while emergencyPhoneNum.count < index {
-                emergencyPhoneNum.append(nil)
-            }
-            emergencyPhoneNum.append(number)
-        }
+    func setDiseases(_ diseases: String) {
+        self.diseases = diseases
     }
 
-    func setPassword(_ newPassword: String) {
-        // You could hash here in real use cases
-        self.updatablePassword = newPassword
+    func setConditions(_ conditions: [String]) {
+        self.conditions = conditions
+    }
+
+    func setOtherConditions(_ other: String) {
+        self.otherConditions = other
+    }
+
+    func setEmergencyContacts(_ contacts: [[String: String]]) {
+        self.emergencyContacts = contacts
     }
 }
-

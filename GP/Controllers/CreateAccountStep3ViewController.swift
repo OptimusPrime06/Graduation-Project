@@ -16,7 +16,7 @@ private let backgroundImage = BackgroundImageView()
 private let createAccountLabel = StepNumberLabel(stepNumber: 3)
 
 private let progressBarView: SegmentedBarView = {
-
+    
     let progressBarView = SegmentedBarView()
     let colors = [
         UIColor(named: Constants.previousPageColor)!,
@@ -27,9 +27,9 @@ private let progressBarView: SegmentedBarView = {
         colors: colors, spacing: 12
     )
     progressBarView.setModel(progressViewModel)
-
+    
     progressBarView.translatesAutoresizingMaskIntoConstraints = false
-
+    
     return progressBarView
 }()
 
@@ -58,9 +58,9 @@ private let addContactButton: UIButton = {
     button.setTitleColor(.white, for: .normal)
     button.backgroundColor = UIColor(named: Constants.nextButtonColor)
     button.layer.cornerRadius = 8
-
+    
     button.translatesAutoresizingMaskIntoConstraints = false
-
+    
     return button
 }()
 
@@ -85,39 +85,49 @@ class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegat
         UISetUp()
     }
     
-//    override func viewWillAppear(_ animated: Bool) {
-//        let handle = Auth.auth().addStateDidChangeListener { auth, user in
-//          // ...
-//        }
-//    }
-//
-//    override func viewWillDisappear(_ animated: Bool) {
-//        Auth.auth().removeStateDidChangeListener(handle!)
-//    }
-
+    //    override func viewWillAppear(_ animated: Bool) {
+    //        let handle = Auth.auth().addStateDidChangeListener { auth, user in
+    //          // ...
+    //        }
+    //    }
+    //
+    //    override func viewWillDisappear(_ animated: Bool) {
+    //        Auth.auth().removeStateDidChangeListener(handle!)
+    //    }
+    
     @objc func addEmergencyContactField() {
         requestContactsAccess()
     }
-
+    
     @objc func createAccountButtonTapped() {
         if emergencyContacts.count < 2 {
-            let alert = UIAlertController(title: "At least 2 contacts required", message: "Please add at least 2 emergency contacts before creating your account.", preferredStyle: .alert)
+            let alert = UIAlertController(
+                title: "At least 2 contacts required",
+                message: "Please add at least 2 emergency contacts before creating your account.",
+                preferredStyle: .alert
+            )
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             present(alert, animated: true)
             return
         }
-        // Save contacts to user model or Firestore as needed
-        _ = CreateAccountViewModel(with: step3UserModel, delegate: self)
+        
+        // ✅ Save the contacts to the user model before proceeding
+        step3UserModel.setEmergencyContacts(emergencyContacts)
+        
+        // Proceed with account creation
+        step3UserModel.setEmergencyContacts(emergencyContacts)
+        let viewModel = CreateAccountViewModel(with: step3UserModel, delegate: self)
     }
-
+    
+    
     @objc func backButtonTapped() {
         navigationController?.popViewController(animated: true)
     }
-
+    
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
-
+    
     private func requestContactsAccess() {
         let store = CNContactStore()
         store.requestAccess(for: .contacts) { [weak self] granted, error in
@@ -130,14 +140,14 @@ class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegat
             }
         }
     }
-
+    
     private func showContactPicker() {
         let contactPicker = CNContactPickerViewController()
         contactPicker.delegate = self
         contactPicker.predicateForEnablingContact = NSPredicate(format: "phoneNumbers.@count > 0")
         present(contactPicker, animated: true)
     }
-
+    
     private func showContactsPermissionAlert() {
         let alert = UIAlertController(
             title: "Contacts Access Required",
@@ -152,7 +162,7 @@ class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegat
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(alert, animated: true)
     }
-
+    
     // MARK: - CNContactPickerDelegate
     func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
         guard let phoneNumber = contact.phoneNumbers.first?.value.stringValue else { return }
@@ -170,7 +180,7 @@ class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegat
         label.heightAnchor.constraint(equalToConstant: 50).isActive = true
         emergencyContactsStackView.addArrangedSubview(label)
     }
-
+    
     // Helper to get contacts array for saving
     func getEmergencyContactsForSaving() -> [[String: String]] {
         return emergencyContacts
@@ -178,7 +188,7 @@ class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegat
 }
 
 extension CreateAccountStep3ViewController {
-
+    
     private func UISetUp() {
         view.addSubview(backgroundImage)
         view.addSubview(createAccountLabel)
@@ -187,7 +197,7 @@ extension CreateAccountStep3ViewController {
         view.addSubview(emergencyContactsStackView)
         view.addSubview(addContactButton)
         view.addSubview(navigationButtons)
-
+        
         //Background Image Constraints
         let backgroundImageConstraints = [
             backgroundImage.topAnchor.constraint(equalTo: view.topAnchor),
@@ -195,18 +205,18 @@ extension CreateAccountStep3ViewController {
             backgroundImage.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backgroundImage.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ]
-
+        
         NSLayoutConstraint.activate(backgroundImageConstraints)
-
+        
         //Step1 Label
         let setUpLabelConstraints = [
             createAccountLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             createAccountLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             createAccountLabel.heightAnchor.constraint(equalToConstant: 40),
         ]
-
+        
         NSLayoutConstraint.activate(setUpLabelConstraints)
-
+        
         //Progress Bar Constraints
         let progressBarConstraints = [
             progressBarView.topAnchor.constraint(equalTo: createAccountLabel.bottomAnchor, constant: 20),
@@ -214,9 +224,9 @@ extension CreateAccountStep3ViewController {
             progressBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             progressBarView.heightAnchor.constraint(equalToConstant: 20),
         ]
-
+        
         NSLayoutConstraint.activate(progressBarConstraints)
-
+        
         //Emergency Contacts Label Constraints
         let emergencyContactsLabelConstraints = [
             emergencyContactsLabel.topAnchor.constraint(equalTo: progressBarView.bottomAnchor, constant: 15),
@@ -224,16 +234,16 @@ extension CreateAccountStep3ViewController {
         ]
         
         NSLayoutConstraint.activate(emergencyContactsLabelConstraints)
-
+        
         //Emergency Contacts StackView
         let emergencyContactsStackViewConstraints = [
             emergencyContactsStackView.topAnchor.constraint(equalTo: emergencyContactsLabel.bottomAnchor, constant: 10),
             emergencyContactsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             emergencyContactsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ]
-
+        
         NSLayoutConstraint.activate(emergencyContactsStackViewConstraints)
-
+        
         //Add Contact Button Constraints
         let addContactButtonConstraints = [
             addContactButton.topAnchor.constraint(equalTo: emergencyContactsStackView.bottomAnchor, constant: 10),
@@ -241,13 +251,13 @@ extension CreateAccountStep3ViewController {
             addContactButton.heightAnchor.constraint(equalToConstant: 40),
             addContactButton.widthAnchor.constraint(equalToConstant: 150),
         ]
-
+        
         NSLayoutConstraint.activate(addContactButtonConstraints)
-
-
+        
+        
         //Create Account Button
         navigationButtons.nextButton.setTitle("Create account", for: .normal)
-
+        
         //Navigation StackView Constraints
         let navgationButtonsStackViewConstraints = [
             navigationButtons.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
@@ -255,20 +265,20 @@ extension CreateAccountStep3ViewController {
             navigationButtons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             navigationButtons.heightAnchor.constraint(equalToConstant: 50),
         ]
-
+        
         NSLayoutConstraint.activate(navgationButtonsStackViewConstraints)
-
+        
         //Remove any pre-existing contact fields or labels
         for view in emergencyContactsStackView.arrangedSubviews {
             emergencyContactsStackView.removeArrangedSubview(view)
             view.removeFromSuperview()
         }
-
+        
         //Buttons Functions
         addContactButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.backButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.nextButton.removeTarget(nil, action: nil, for: .allEvents)
-
+        
         //Adding Button Functions
         addContactButton.addTarget(self, action: #selector(addEmergencyContactField), for: .touchUpInside)
         navigationButtons.nextButton.addTarget(self, action: #selector(createAccountButtonTapped),for: .touchUpInside)
