@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import Contacts
+import ContactsUI
 
 //MARK: - Declaring UI components
 
@@ -33,7 +35,7 @@ private let progressBarView: SegmentedBarView = {
 
 private let emergencyContactsLabel: UILabel = {
     let label = UILabel()
-    label.text = "Emergency Contacts (at least 2)"
+    label.text = "Add An Emergency Contacts (At least 2)"
     label.textColor = .white
     label.font = .systemFont(ofSize: 18, weight: .bold)
     label.translatesAutoresizingMaskIntoConstraints = false
@@ -64,10 +66,11 @@ private let addContactButton: UIButton = {
 
 private let navigationButtons = NavigationButtons()
 
-class CreateAccountStep4ViewController: UIViewController {
+class CreateAccountStep2ViewController: UIViewController, CNContactPickerDelegate {
     
     var step4UserModel : UserModel!
     
+    private var emergencyContacts: [[String: String]] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -87,17 +90,23 @@ class CreateAccountStep4ViewController: UIViewController {
 //          // ...
 //        }
 //    }
-//    
+//
 //    override func viewWillDisappear(_ animated: Bool) {
 //        Auth.auth().removeStateDidChangeListener(handle!)
 //    }
 
     @objc func addEmergencyContactField() {
-        print("Ana dost add Contact")
-        emergencyContactsStackView.addArrangedSubview(createEmergencyContactTextField())
+        requestContactsAccess()
     }
 
     @objc func createAccountButtonTapped() {
+        if emergencyContacts.count < 2 {
+            let alert = UIAlertController(title: "At least 2 contacts required", message: "Please add at least 2 emergency contacts before creating your account.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        // Save contacts to user model or Firestore as needed
         _ = CreateAccountViewModel(with: step4UserModel, delegate: self)
     }
 
@@ -109,12 +118,68 @@ class CreateAccountStep4ViewController: UIViewController {
         view.endEditing(true)
     }
 
+    private func requestContactsAccess() {
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { [weak self] granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    self?.showContactPicker()
+                } else {
+                    self?.showContactsPermissionAlert()
+                }
+            }
+        }
+    }
+
+    private func showContactPicker() {
+        let contactPicker = CNContactPickerViewController()
+        contactPicker.delegate = self
+        contactPicker.predicateForEnablingContact = NSPredicate(format: "phoneNumbers.@count > 0")
+        present(contactPicker, animated: true)
+    }
+
+    private func showContactsPermissionAlert() {
+        let alert = UIAlertController(
+            title: "Contacts Access Required",
+            message: "Please allow access to your contacts to add emergency contacts.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    // MARK: - CNContactPickerDelegate
+    func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
+        guard let phoneNumber = contact.phoneNumbers.first?.value.stringValue else { return }
+        let contactInfo: [String: String] = [
+            "name": "\(contact.givenName) \(contact.familyName)",
+            "phone": phoneNumber
+        ]
+        emergencyContacts.append(contactInfo)
+        let label = UILabel()
+        label.text = "\(contact.givenName) \(contact.familyName): \(phoneNumber)"
+        label.textColor = .white
+        label.backgroundColor = UIColor(named: Constants.signUpTextFieldsBackgroundColor)
+        label.layer.cornerRadius = 8
+        label.clipsToBounds = true
+        label.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        emergencyContactsStackView.addArrangedSubview(label)
+    }
+
+    // Helper to get contacts array for saving
+    func getEmergencyContactsForSaving() -> [[String: String]] {
+        return emergencyContacts
+    }
 }
 
-extension CreateAccountStep4ViewController {
+extension CreateAccountStep2ViewController {
 
     private func UISetUp() {
-
         view.addSubview(backgroundImage)
         view.addSubview(createAccountLabel)
         view.addSubview(progressBarView)
@@ -158,12 +223,6 @@ extension CreateAccountStep4ViewController {
             emergencyContactsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
         ]
         
-        //Main Emergency Contacts
-        if emergencyContactsStackView.arrangedSubviews.isEmpty {
-            emergencyContactsStackView.addArrangedSubview(createEmergencyContactTextField())
-            emergencyContactsStackView.addArrangedSubview(createEmergencyContactTextField())
-        }
-
         NSLayoutConstraint.activate(emergencyContactsLabelConstraints)
 
         //Emergency Contacts StackView
@@ -199,8 +258,13 @@ extension CreateAccountStep4ViewController {
 
         NSLayoutConstraint.activate(navgationButtonsStackViewConstraints)
 
+        //Remove any pre-existing contact fields or labels
+        for view in emergencyContactsStackView.arrangedSubviews {
+            emergencyContactsStackView.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
         //Buttons Functions
-        // Remove any existing targets before adding a new one
         addContactButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.backButton.removeTarget(nil, action: nil, for: .allEvents)
         navigationButtons.nextButton.removeTarget(nil, action: nil, for: .allEvents)
@@ -220,10 +284,3 @@ extension CreateAccountStep4ViewController {
     }
     
 }
-
-//MARK: - Preview
-//#if DEBUG
-//#Preview("Sign Up 4"){
-//    CreateAccountStep4ViewController()
-//}
-//#endif
