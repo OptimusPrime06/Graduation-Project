@@ -10,9 +10,9 @@ import FirebaseAuth
 
 class CreateAccountViewModel {
     
-    let delegate : CreateAccountStep4ViewController?
+    let delegate : CreateAccountStep3ViewController?
         
-    init(with createAccountData : UserModel, delegate : CreateAccountStep4ViewController){
+    init(with createAccountData : UserModel, delegate : CreateAccountStep3ViewController){
         self.delegate = delegate
         Auth.auth().createUser(withEmail: createAccountData.getEmail()!, password: createAccountData.updatablePassword!) { authResult, error in
             if let signUpError = error {

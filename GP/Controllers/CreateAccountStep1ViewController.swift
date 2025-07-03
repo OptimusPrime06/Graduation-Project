@@ -161,8 +161,8 @@ class CreateAccountStep1ViewController: UIViewController {
         if emailTextField.text != "" || passwordTextField.text != "" {
             step1UserModel.setEmail(emailTextField.text!)
             step1UserModel.setPassword(passwordTextField.text!)
-            let vc = CreateAccountStep3ViewController()
-            vc.step3UserModel = self.step1UserModel
+            let vc = CreateAccountStep2ViewController()
+            vc.step2UserModel = self.step1UserModel
             navigationController?.pushViewController(vc, animated: true)
         } else {
             let alert = UIAlertController(title: "Missing Info", message: "email or password is empty", preferredStyle: .alert)

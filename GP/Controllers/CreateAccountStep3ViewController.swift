@@ -66,9 +66,9 @@ private let addContactButton: UIButton = {
 
 private let navigationButtons = NavigationButtons()
 
-class CreateAccountStep2ViewController: UIViewController, CNContactPickerDelegate {
+class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegate {
     
-    var step4UserModel : UserModel!
+    var step3UserModel : UserModel!
     
     private var emergencyContacts: [[String: String]] = []
     
@@ -107,7 +107,7 @@ class CreateAccountStep2ViewController: UIViewController, CNContactPickerDelegat
             return
         }
         // Save contacts to user model or Firestore as needed
-        _ = CreateAccountViewModel(with: step4UserModel, delegate: self)
+        _ = CreateAccountViewModel(with: step3UserModel, delegate: self)
     }
 
     @objc func backButtonTapped() {
@@ -177,7 +177,7 @@ class CreateAccountStep2ViewController: UIViewController, CNContactPickerDelegat
     }
 }
 
-extension CreateAccountStep2ViewController {
+extension CreateAccountStep3ViewController {
 
     private func UISetUp() {
         view.addSubview(backgroundImage)

@@ -93,9 +93,9 @@ private let alertStackView = AlertTypesStackView()
 
 private let navigationButtons = NavigationButtons()
 
-class CreateAccountStep3ViewController: UIViewController {
+class CreateAccountStep2ViewController: UIViewController {
 
-    var step3UserModel : UserModel!
+    var step2UserModel : UserModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -113,8 +113,8 @@ class CreateAccountStep3ViewController: UIViewController {
     }
     
     @objc func nextButtonTapped() {
-        let vc = CreateAccountStep4ViewController()
-        vc.step4UserModel = self.step3UserModel
+        let vc = CreateAccountStep3ViewController()
+        vc.step3UserModel = self.step2UserModel
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -128,7 +128,7 @@ class CreateAccountStep3ViewController: UIViewController {
 
 }
 
-extension CreateAccountStep3ViewController {
+extension CreateAccountStep2ViewController {
 
     private func UISetUp() {
 
@@ -267,7 +267,7 @@ extension CreateAccountStep3ViewController {
     }
 }
 
-extension CreateAccountStep3ViewController: UITableViewDelegate,
+extension CreateAccountStep2ViewController: UITableViewDelegate,
     UITableViewDataSource
 {
 
@@ -312,7 +312,7 @@ extension CreateAccountStep3ViewController: UITableViewDelegate,
 
 }
 
-extension CreateAccountStep3ViewController: UITextViewDelegate {
+extension CreateAccountStep2ViewController: UITextViewDelegate {
 
     private func textViewSetUp() {
         otherDiseases.delegate = self
