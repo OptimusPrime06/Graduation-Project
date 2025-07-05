@@ -37,7 +37,11 @@ private let emailTextField = SignUpTextFields(placeholder: "Email", backgrounCol
 
 private let passwordTextField = SignUpTextFields(placeholder: "Password", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
 
-private let ageTextField = SignUpTextFields(placeholder: "Age", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
+private let ageTextField: UITextField = {
+    let textField = SignUpTextFields(placeholder: "Age", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
+    textField.keyboardType = .numberPad // ✅ Numbers only keyboard
+    return textField
+}()
 
 private let maleGenderButton: UIButton = {
     
@@ -158,18 +162,35 @@ class CreateAccountStep1ViewController: UIViewController {
     }
     
     @objc func nextButtonTapped() {
-        if emailTextField.text != "" || passwordTextField.text != "" {
-            step1UserModel.setEmail(emailTextField.text!)
-            step1UserModel.setPassword(passwordTextField.text!)
-            let vc = CreateAccountStep2ViewController()
-            vc.step2UserModel = self.step1UserModel
-            navigationController?.pushViewController(vc, animated: true)
-        } else {
-            let alert = UIAlertController(title: "Missing Info", message: "email or password is empty", preferredStyle: .alert)
+        guard let email = emailTextField.text,
+              let password = passwordTextField.text,
+              let name = nameTextField.text,
+              let ageText = ageTextField.text,
+              !email.isEmpty, !password.isEmpty else {
+            let alert = UIAlertController(title: "Missing Info", message: "Email or password is empty", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             present(alert, animated: true)
+            return
         }
+        
+        step1UserModel.setEmail(email)
+        step1UserModel.setPassword(password)
+        step1UserModel.setName(name)
+        step1UserModel.setAge(Int(ageText) ?? 0)  // Convert string to Int safely
+        
+        // Get selected experience from button title if it's a number
+        if let selectedExperience = driverExperiencDropDownMenu.title(for: .normal),
+           let experienceYears = Int(selectedExperience) {
+            step1UserModel.setExperience(String(experienceYears))
+        } else {
+            step1UserModel.setExperience("") // Or keep it optional
+        }
+        
+        let vc = CreateAccountStep2ViewController()
+        vc.step2UserModel = self.step1UserModel
+        navigationController?.pushViewController(vc, animated: true)
     }
+    
     
     @objc func backButtonTapped() {
         navigationController?.popViewController(animated: true)
@@ -377,10 +398,3 @@ extension CreateAccountStep1ViewController : UITextFieldDelegate {
         }
     }
 }
-
-////MARK: - Preview
-//#if DEBUG
-//    #Preview("Sign Up 1 View") {
-//        CreateAccountStep1ViewController()
-//    }
-//#endif
