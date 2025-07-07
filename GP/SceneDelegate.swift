@@ -13,37 +13,39 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     var window: UIWindow?
     
-    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        self.window = UIWindow(windowScene: windowScene)
+        window = UIWindow(windowScene: windowScene)
         
         if Auth.auth().currentUser != nil {
-            let mainVC = MainTabBarViewController()
-            let navigationController = UINavigationController(rootViewController: mainVC)
-            self.window?.rootViewController = navigationController
+            print("✅ Authenticated user found. Loading main tab bar.")
+            showMainScreen()
         } else {
-            let loginVC = LogInViewController()
-            let navigationController = UINavigationController(rootViewController: loginVC)
-            self.window?.rootViewController = navigationController
+            print("🔐 No user logged in. Loading login screen.")
+            showLoginScreen()
         }
-        // Make the window visible
+        
         window?.makeKeyAndVisible()
     }
     
+    // MARK: - Navigation Helpers
+    
     func showLoginScreen() {
-        let LoginVC = LogInViewController()
-        let navigationController = UINavigationController(rootViewController: LoginVC)
-        window?.rootViewController = navigationController
+        let loginVC = LogInViewController()
+        let navController = UINavigationController(rootViewController: loginVC)
+        window?.rootViewController = navController
     }
     
-    // Add this method to show main app screen when logged in
     func showMainScreen() {
-        let MapVC = MapViewController()
-        let navigationController = UINavigationController(rootViewController: MapVC)
-        window?.rootViewController = navigationController
+        let mainTabBar = MainTabBarViewController()
+        window?.rootViewController = mainTabBar
     }
+    
+    // MARK: - Lifecycle (default stubs)
     
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.

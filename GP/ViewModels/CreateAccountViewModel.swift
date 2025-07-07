@@ -37,8 +37,6 @@ class CreateAccountViewModel {
                 "diseases": createAccountData.getDiseases() ?? "",
                 "conditions": createAccountData.getConditions(),
                 "otherConditions": createAccountData.getOtherConditions() ?? "",
-                "alertType": createAccountData.getAlertType() ?? "",
-                "preferredAlerts": createAccountData.getPreferredAlerts(),
                 "emergencyContacts": createAccountData.getEmergencyContacts()
             ]
             

@@ -8,6 +8,7 @@
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import CryptoKit
 
 class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     // MARK: - UI Components
@@ -32,7 +33,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         label.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         label.textAlignment = .center
         label.textColor = .white
-        label.text = "Name"
+        label.text = ""
         label.isAccessibilityElement = true
         label.accessibilityLabel = "User Name"
         return label
@@ -44,7 +45,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textAlignment = .center
         label.textColor = .white
-        label.text = "Email"
+        label.text = ""
         label.isAccessibilityElement = true
         label.accessibilityLabel = "User Email"
         return label
@@ -87,14 +88,12 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Add background image
         let backgroundImage = UIImageView()
         backgroundImage.translatesAutoresizingMaskIntoConstraints = false
         backgroundImage.image = UIImage(named: "backgroundImage")
         backgroundImage.contentMode = .scaleAspectFill
         view.addSubview(backgroundImage)
         
-        // Add subviews
         view.addSubview(profileImageView)
         view.addSubview(nameLabel)
         view.addSubview(emailLabel)
@@ -102,72 +101,60 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         view.addSubview(logoutButton)
         view.addSubview(activityIndicator)
         
-        // Set up constraints
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+        
+        profileImageView.isUserInteractionEnabled = true
+        let imageTapGesture = UITapGestureRecognizer(target: self, action: #selector(profileImageTapped))
+        profileImageView.addGestureRecognizer(imageTapGesture)
+        
         NSLayoutConstraint.activate([
-            // Background image constraints
             backgroundImage.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImage.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backgroundImage.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             backgroundImage.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-            // Profile image constraints
             profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
             profileImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             profileImageView.widthAnchor.constraint(equalToConstant: 100),
             profileImageView.heightAnchor.constraint(equalToConstant: 100),
             
-            // Name label constraints
             nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 20),
             nameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             nameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            // Email label constraints
             emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 10),
             emailLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             emailLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            // Edit email button constraints
             editEmailButton.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 20),
             editEmailButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             editEmailButton.widthAnchor.constraint(equalToConstant: 200),
             editEmailButton.heightAnchor.constraint(equalToConstant: 50),
             
-            // Logout button constraints
             logoutButton.topAnchor.constraint(equalTo: editEmailButton.bottomAnchor, constant: 20),
             logoutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoutButton.widthAnchor.constraint(equalToConstant: 200),
             logoutButton.heightAnchor.constraint(equalToConstant: 50),
             
-            // Activity indicator
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
-        // Button targets
         editEmailButton.addTarget(self, action: #selector(editEmailTapped), for: .touchUpInside)
         logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
         
-        // Make profile image view tappable
-        profileImageView.isUserInteractionEnabled = true
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(profileImageTapped))
-        profileImageView.addGestureRecognizer(tapGesture)
-        
-        // Load user data
+        loadLocalProfileImage()
         loadUserData()
     }
     
     @objc private func logoutTapped() {
-        let alert = UIAlertController(
-            title: "Log Out",
-            message: "Are you sure you want to log out?",
-            preferredStyle: .alert
-        )
-        
+        let alert = UIAlertController(title: "Log Out", message: "Are you sure you want to log out?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Log Out", style: .destructive) { _ in
             do {
                 try Auth.auth().signOut()
-                // Navigate to login screen
                 if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
                     sceneDelegate.showLoginScreen()
                 }
@@ -175,7 +162,6 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
                 self.showAlert(title: "Error", message: signOutError.localizedDescription)
             }
         })
-        
         present(alert, animated: true)
     }
     
@@ -187,21 +173,20 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         present(picker, animated: true)
     }
     
-    // MARK: - UIImagePickerControllerDelegate
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         picker.dismiss(animated: true)
-        if let editedImage = info[.editedImage] as? UIImage {
-            profileImageView.image = editedImage
-        } else if let originalImage = info[.originalImage] as? UIImage {
-            profileImageView.image = originalImage
+        
+        guard let selectedImage = (info[.editedImage] ?? info[.originalImage]) as? UIImage else {
+            return
         }
+        
+        profileImageView.image = selectedImage
+        saveProfileImageLocally(selectedImage)
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true)
     }
-    
-    // MARK: - Firebase Data Loading
     
     private func loadUserData() {
         setLoading(true)
@@ -210,6 +195,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             setLoading(false)
             return
         }
+        
         let db = Firestore.firestore()
         db.collection("users").document(user.uid).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
@@ -219,6 +205,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
                     self.showAlert(title: "Error", message: error.localizedDescription)
                     return
                 }
+                
                 guard let data = snapshot?.data(),
                       let name = data["name"] as? String,
                       let email = data["email"] as? String else {
@@ -231,7 +218,9 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         }
     }
     
-    // MARK: - Edit Email Functionality
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
     
     @objc private func editEmailTapped() {
         let alert = UIAlertController(title: "Edit Email", message: "Enter your new email address.", preferredStyle: .alert)
@@ -260,6 +249,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             setLoading(false)
             return
         }
+        
         user.sendEmailVerification(beforeUpdatingEmail: newEmail) { [weak self] error in
             guard let self = self else { return }
             DispatchQueue.main.async {
@@ -268,28 +258,20 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
                     self.showAlert(title: "Error", message: error.localizedDescription)
                     return
                 }
-                // Update email in Firestore
+                
                 let db = Firestore.firestore()
-                db.collection("users").document(user.uid).updateData(["email": newEmail]) { error in
-                    DispatchQueue.main.async {
-                        if let error = error {
-                            self.showAlert(title: "Error", message: error.localizedDescription)
-                            return
-                        }
-                        self.emailLabel.text = newEmail
-                        self.showAlert(title: "Success", message: "Email updated successfully. Please verify your new email.")
+                db.collection("users").document(user.uid).updateData([
+                    "email": newEmail
+                ]) { error in
+                    if let error = error {
+                        self.showAlert(title: "Firestore Error", message: error.localizedDescription)
+                        return
                     }
+                    self.emailLabel.text = newEmail
+                    self.showAlert(title: "Email Change Pending", message: "A verification link was sent to your new email. Once you verify it, your email will be updated.")
                 }
             }
         }
-    }
-    
-    // MARK: - Alert Helper
-    
-    private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
     }
     
     private func setLoading(_ loading: Bool) {
@@ -305,14 +287,50 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             }
         }
     }
+    
+    private func saveProfileImageLocally(_ image: UIImage) {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        let fileURL = getProfileImageFileURL()
+        do {
+            try data.write(to: fileURL)
+            print("✅ Profile image saved locally.")
+        } catch {
+            print("❌ Error saving image: \(error)")
+        }
+    }
+    
+    private func loadLocalProfileImage() {
+        let fileURL = getProfileImageFileURL()
+        if FileManager.default.fileExists(atPath: fileURL.path),
+           let imageData = try? Data(contentsOf: fileURL),
+           let image = UIImage(data: imageData) {
+            profileImageView.image = image
+            print("✅ Loaded image from local storage.")
+        }
+    }
+    
+    private func getProfileImageFileURL() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0].appendingPathComponent("profileImage.jpg")
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
 }
-
-// MARK: - String Extension for Email Validation
 
 extension String {
     func isValidEmail() -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
         return emailPredicate.evaluate(with: self)
+    }
+    
+    func sha256() -> String {
+        let hash = SHA256.hash(data: self.data(using: .utf8) ?? Data())
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
 }

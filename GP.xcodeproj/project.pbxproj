@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		29F7C79E2E19606E001587CE /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 29F7C79D2E19606E001587CE /* FirebaseStorage */; };
 		5C3315B62DA1669B00DFD19E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 5C3315B52DA1669B00DFD19E /* FirebaseAuth */; };
 		5C3315B82DA1670000DFD19E /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 5C3315B72DA1670000DFD19E /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
@@ -43,6 +44,7 @@
 			files = (
 				5C3315B62DA1669B00DFD19E /* FirebaseAuth in Frameworks */,
 				5C3315B82DA1670000DFD19E /* FirebaseFirestore in Frameworks */,
+				29F7C79E2E19606E001587CE /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +97,7 @@
 			packageProductDependencies = (
 				5C3315B52DA1669B00DFD19E /* FirebaseAuth */,
 				5C3315B72DA1670000DFD19E /* FirebaseFirestore */,
+				29F7C79D2E19606E001587CE /* FirebaseStorage */,
 			);
 			productName = GP;
 			productReference = 5CCD82292D75D1B300A504AA /* GP.app */;
@@ -173,6 +176,8 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera to record your face";
 				INFOPLIST_KEY_NSContactsUsageDescription = "This app needs access to contacts to add emergency contacts for drowsiness alerts.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need to acces your Location";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone to process voice commands";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need your speech for chatbot voice input";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
@@ -210,6 +215,8 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera to record your face";
 				INFOPLIST_KEY_NSContactsUsageDescription = "This app needs access to contacts to add emergency contacts for drowsiness alerts.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need to acces your Location";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone to process voice commands";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need your speech for chatbot voice input";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
@@ -388,6 +395,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		29F7C79D2E19606E001587CE /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5C3315B32DA15EEC00DFD19E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		5C3315B52DA1669B00DFD19E /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5C3315B32DA15EEC00DFD19E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

@@ -37,7 +37,11 @@ private let emailTextField = SignUpTextFields(placeholder: "Email", backgrounCol
 
 private let passwordTextField = SignUpTextFields(placeholder: "Password", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
 
-private let ageTextField = SignUpTextFields(placeholder: "Age", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
+private let ageTextField: UITextField = {
+    let textField = SignUpTextFields(placeholder: "Age", backgrounColor: Constants.signUpTextFieldsBackgroundColor)
+    textField.keyboardType = .numberPad // ✅ Numbers only keyboard
+    return textField
+}()
 
 private let maleGenderButton: UIButton = {
     
