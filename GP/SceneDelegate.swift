@@ -22,10 +22,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         
         if Auth.auth().currentUser != nil {
-            print("✅ Authenticated user found. Loading main tab bar.")
             showMainScreen()
         } else {
-            print("🔐 No user logged in. Loading login screen.")
             showLoginScreen()
         }
         

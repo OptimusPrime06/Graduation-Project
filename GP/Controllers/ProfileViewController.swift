@@ -305,7 +305,6 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
            let imageData = try? Data(contentsOf: fileURL),
            let image = UIImage(data: imageData) {
             profileImageView.image = image
-            print("✅ Loaded image from local storage.")
         }
     }
     

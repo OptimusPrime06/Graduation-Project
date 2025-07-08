@@ -37,7 +37,7 @@ struct Constants {
         "Seizures (epilepsy)",
         "Tremors & stiff muscles",
         "Sudden sleep attacks (narcolepsy)",
-        "Partial face paralysis (stroke or Bell’s palsy)",
+        "Partial face paralysis (stroke or Bell's palsy)",
         "Sleep apnea (severe snoring & breathing issues)",
         "Severe migraines",
         "Nerve diseases like multiple sclerosis that affect vision & alertness",
@@ -52,4 +52,3 @@ struct Constants {
     ]
     
 }
-
