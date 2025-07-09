@@ -9,7 +9,7 @@ import UIKit
 import Speech
 import AVFoundation
 
-class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
+class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpeechSynthesizerDelegate {
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -108,6 +108,7 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
     
     // MARK: - Speech Synthesizer
     private let speechSynthesizer = AVSpeechSynthesizer()
+    private var shouldRestartListeningAfterSpeech = false
     
     // MARK: - View Lifecycle
     override func viewDidLoad() {
@@ -119,6 +120,9 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
         setupUI()
         requestSpeechAuthorization()
         updateUIForCurrentLanguage()
+        
+        // Set speech synthesizer delegate
+        speechSynthesizer.delegate = self
         
         // Show welcome message
         showWelcomeMessage()
@@ -137,6 +141,9 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
                 "مرحباً، أهلاً بك في البوت الذكي" : 
                 "Welcome to the Smart Bot"
             self.appendMessage("🤖 \(welcomeMessage)")
+            
+            // Don't auto-restart listening for welcome message
+            self.shouldRestartListeningAfterSpeech = false
             self.speak(welcomeMessage)
         }
     }
@@ -368,6 +375,8 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
     
     @objc private func didTapVoiceButton() {
         if audioEngine.isRunning {
+            // User manually stopped listening, so don't auto-restart
+            shouldRestartListeningAfterSpeech = false
             stopListening()
         } else {
             startListening()
@@ -566,6 +575,9 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
                     let response = try JSONDecoder().decode(ChatbotResponse.self, from: data)
                     let botPrefix = self.currentLanguage.starts(with: "ar") ? "البوت: " : "Bot: "
                     self.appendMessage("🤖 \(botPrefix)\(response.reply)")
+                    
+                    // Set flag to restart listening after bot finishes speaking
+                    self.shouldRestartListeningAfterSpeech = true
                     self.speak(response.reply)
                 } catch {
                     // Fallback to old parsing method
@@ -573,6 +585,9 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
                        let reply = json["reply"] as? String {
                         let botPrefix = self.currentLanguage.starts(with: "ar") ? "البوت: " : "Bot: "
                         self.appendMessage("🤖 \(botPrefix)\(reply)")
+                        
+                        // Set flag to restart listening after bot finishes speaking
+                        self.shouldRestartListeningAfterSpeech = true
                         self.speak(reply)
                     } else {
                         print("⚠️ No valid 'reply' field")
@@ -683,6 +698,28 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate {
     private func validateMessage(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return !trimmed.isEmpty && trimmed.count <= ChatbotConfig.maxMessageLength
+    }
+    
+    // MARK: - AVSpeechSynthesizerDelegate
+    
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        print("🔊 Bot finished speaking")
+        
+        // Automatically restart listening if the flag is set
+        if shouldRestartListeningAfterSpeech {
+            shouldRestartListeningAfterSpeech = false
+            
+            // Add a small delay to ensure audio session is properly configured
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.startListening()
+                print("🎙️ Auto-restarted listening after bot response")
+            }
+        }
+    }
+    
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        print("🔊 Bot speech was cancelled")
+        shouldRestartListeningAfterSpeech = false
     }
     
 }

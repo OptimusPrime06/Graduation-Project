@@ -83,6 +83,18 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         return indicator
     }()
     
+    private let infoButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(systemName: "info.circle"), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        button.layer.cornerRadius = 20
+        button.isAccessibilityElement = true
+        button.accessibilityLabel = "Information Button"
+        return button
+    }()
+    
     // MARK: - Lifecycle Methods
     
     override func viewDidLoad() {
@@ -100,6 +112,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         view.addSubview(editEmailButton)
         view.addSubview(logoutButton)
         view.addSubview(activityIndicator)
+        view.addSubview(infoButton)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
@@ -139,11 +152,17 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             logoutButton.heightAnchor.constraint(equalToConstant: 50),
             
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            infoButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            infoButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            infoButton.widthAnchor.constraint(equalToConstant: 40),
+            infoButton.heightAnchor.constraint(equalToConstant: 40)
         ])
         
         editEmailButton.addTarget(self, action: #selector(editEmailTapped), for: .touchUpInside)
         logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
+        infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
         
         loadLocalProfileImage()
         loadUserData()
@@ -163,6 +182,13 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             }
         })
         present(alert, animated: true)
+    }
+    
+    @objc private func infoButtonTapped() {
+        let infoViewController = InformationViewController()
+        let navigationController = UINavigationController(rootViewController: infoViewController)
+        navigationController.modalPresentationStyle = .fullScreen
+        present(navigationController, animated: true)
     }
     
     @objc private func profileImageTapped() {

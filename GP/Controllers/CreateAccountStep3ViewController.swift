@@ -116,7 +116,7 @@ class CreateAccountStep3ViewController: UIViewController, CNContactPickerDelegat
         
         // Proceed with account creation
         step3UserModel.setEmergencyContacts(emergencyContacts)
-        let viewModel = CreateAccountViewModel(with: step3UserModel, delegate: self)
+        _ = CreateAccountViewModel(with: step3UserModel, delegate: self)
     }
     
     
