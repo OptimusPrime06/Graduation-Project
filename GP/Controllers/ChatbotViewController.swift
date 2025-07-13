@@ -73,7 +73,6 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
     private let microphoneIndicatorView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemRed
-        view.layer.cornerRadius = 30
         view.alpha = 0
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
@@ -139,7 +138,7 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let welcomeMessage = self.currentLanguage.starts(with: "ar") ? 
                 "مرحباً، أهلاً بك في البوت الذكي" : 
-                "Welcome to the Smart Bot"
+                "Welcome to the Chat Bot"
             self.appendMessage("🤖 \(welcomeMessage)")
             
             // Don't auto-restart listening for welcome message
@@ -174,13 +173,18 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [chatTextView, messageField, sendButton, voiceButton, microphoneIndicatorView, volumeIndicatorView].forEach { contentView.addSubview($0) }
+        [chatTextView, messageField, sendButton, voiceButton, microphoneIndicatorView].forEach { contentView.addSubview($0) }
         
         // Add microphone icon to indicator view
         microphoneIndicatorView.addSubview(microphoneIconView)
         
         // Create volume bars
         setupVolumeBars()
+        
+        // Ensure microphone indicator becomes circular after layout
+        view.layoutIfNeeded()
+        microphoneIndicatorView.layer.cornerRadius = 25 // Half of width/height (50/2)
+        microphoneIndicatorView.clipsToBounds = true
         
         NSLayoutConstraint.activate([
             // Background
@@ -226,24 +230,20 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
             voiceButton.widthAnchor.constraint(equalToConstant: 200),
             voiceButton.heightAnchor.constraint(equalToConstant: 50),
             
-            // Microphone Indicator View
-            microphoneIndicatorView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            microphoneIndicatorView.topAnchor.constraint(equalTo: voiceButton.bottomAnchor, constant: 20),
-            microphoneIndicatorView.widthAnchor.constraint(equalToConstant: 60),
-            microphoneIndicatorView.heightAnchor.constraint(equalToConstant: 60),
+            // Microphone Indicator View - positioned beside the voice button, under send button
+            microphoneIndicatorView.centerXAnchor.constraint(equalTo: sendButton.centerXAnchor),
+            microphoneIndicatorView.centerYAnchor.constraint(equalTo: voiceButton.centerYAnchor),
+            microphoneIndicatorView.widthAnchor.constraint(equalToConstant: 50),
+            microphoneIndicatorView.heightAnchor.constraint(equalToConstant: 50),
             
             // Microphone Icon
             microphoneIconView.centerXAnchor.constraint(equalTo: microphoneIndicatorView.centerXAnchor),
             microphoneIconView.centerYAnchor.constraint(equalTo: microphoneIndicatorView.centerYAnchor),
-            microphoneIconView.widthAnchor.constraint(equalToConstant: 30),
-            microphoneIconView.heightAnchor.constraint(equalToConstant: 30),
+            microphoneIconView.widthAnchor.constraint(equalToConstant: 25),
+            microphoneIconView.heightAnchor.constraint(equalToConstant: 25),
             
-            // Volume Indicator View
-            volumeIndicatorView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            volumeIndicatorView.topAnchor.constraint(equalTo: microphoneIndicatorView.bottomAnchor, constant: 10),
-            volumeIndicatorView.widthAnchor.constraint(equalToConstant: 100),
-            volumeIndicatorView.heightAnchor.constraint(equalToConstant: 20),
-            volumeIndicatorView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            // Set bottom constraint for content view using voice button
+            voiceButton.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -20)
         ])
     }
     
@@ -306,19 +306,22 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
     private func showMicrophoneIndicator() {
         UIView.animate(withDuration: 0.3) {
             self.microphoneIndicatorView.alpha = 1.0
-            self.volumeIndicatorView.alpha = 1.0
+            // Don't show volume indicator bars
+            // self.volumeIndicatorView.alpha = 1.0
         }
         startPulsingAnimation()
-        startVolumeAnimation()
+        // Don't start volume animation
+        // startVolumeAnimation()
     }
     
     private func hideMicrophoneIndicator() {
         UIView.animate(withDuration: 0.3) {
             self.microphoneIndicatorView.alpha = 0.0
-            self.volumeIndicatorView.alpha = 0.0
+            // Volume indicator is already hidden
+            // self.volumeIndicatorView.alpha = 0.0
         }
         stopPulsingAnimation()
-        stopVolumeAnimation()
+        // stopVolumeAnimation() // Not needed since we don't start it
     }
     
     private func startPulsingAnimation() {
@@ -370,7 +373,7 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
         let userPrefix = currentLanguage.starts(with: "ar") ? "أنت: " : "You: "
         appendMessage("🧍 \(userPrefix)\(text)")
         messageField.text = ""
-        sendToChatbot(text)
+        sendToChatbot(text, isFromVoice: false)
     }
     
     @objc private func didTapVoiceButton() {
@@ -500,12 +503,12 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
         let userPrefix = currentLanguage.starts(with: "ar") ? "أنت: " : "You: "
         appendMessage("🧍 \(userPrefix)\(message)")
         stopListening()
-        sendToChatbot(message)
+        sendToChatbot(message, isFromVoice: true)
     }
     
     // MARK: - Chatbot API
     
-    private func sendToChatbot(_ message: String) {
+    private func sendToChatbot(_ message: String, isFromVoice: Bool = false) {
         // Validate configuration
         guard ChatbotConfig.shared.isConfigurationValid else {
             showErrorAlert(ChatbotError.missingConfiguration)
@@ -576,8 +579,9 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
                     let botPrefix = self.currentLanguage.starts(with: "ar") ? "البوت: " : "Bot: "
                     self.appendMessage("🤖 \(botPrefix)\(response.reply)")
                     
-                    // Set flag to restart listening after bot finishes speaking
-                    self.shouldRestartListeningAfterSpeech = true
+                    // Set flag to restart listening after bot finishes speaking only if message was from voice
+                    self.shouldRestartListeningAfterSpeech = isFromVoice
+                    print("🎙️ Will restart listening after speech: \(isFromVoice)")
                     self.speak(response.reply)
                 } catch {
                     // Fallback to old parsing method
@@ -586,8 +590,9 @@ class ChatbotViewController: UIViewController, SFSpeechRecognizerDelegate, AVSpe
                         let botPrefix = self.currentLanguage.starts(with: "ar") ? "البوت: " : "Bot: "
                         self.appendMessage("🤖 \(botPrefix)\(reply)")
                         
-                        // Set flag to restart listening after bot finishes speaking
-                        self.shouldRestartListeningAfterSpeech = true
+                        // Set flag to restart listening after bot finishes speaking only if message was from voice
+                        self.shouldRestartListeningAfterSpeech = isFromVoice
+                        print("🎙️ Will restart listening after speech: \(isFromVoice)")
                         self.speak(reply)
                     } else {
                         print("⚠️ No valid 'reply' field")

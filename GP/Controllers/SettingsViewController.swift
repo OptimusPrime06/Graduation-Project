@@ -251,17 +251,30 @@ extension SettingsViewController: UITableViewDelegate, UITableViewDataSource {
         if indexPath.section == 0 {
             let sound = alarmSounds[indexPath.row]
             cell.textLabel?.text = sound.name
+            cell.detailTextLabel?.text = nil // Reset detail text for alarm sounds section
             cell.accessoryType = sound.id == UserDefaults.standard.selectedAlarmSound ? .checkmark : .none
+            cell.accessoryView = nil // Reset accessory view for alarm sounds section
         } else {
             if indexPath.row == emergencyContacts.count {
                 cell.textLabel?.text = "Add Emergency Contact"
                 cell.textLabel?.textColor = .systemBlue
+                cell.detailTextLabel?.text = nil // Reset detail text for "Add Contact" cell
                 cell.accessoryType = .disclosureIndicator
+                cell.accessoryView = nil // Reset accessory view for "Add Contact" cell
             } else {
                 let contact = emergencyContacts[indexPath.row]
                 cell.textLabel?.text = contact["name"]
                 cell.detailTextLabel?.text = contact["phone"]
-                cell.accessoryType = .none
+                
+                // Add a phone icon to indicate this contact can be called
+                if #available(iOS 13.0, *) {
+                    let phoneImage = UIImage(systemName: "phone.fill")
+                    let imageView = UIImageView(image: phoneImage)
+                    imageView.tintColor = .systemGreen
+                    cell.accessoryView = imageView
+                } else {
+                    cell.accessoryType = .detailButton
+                }
             }
         }
         
@@ -277,17 +290,37 @@ extension SettingsViewController: UITableViewDelegate, UITableViewDataSource {
         } else {
             if indexPath.row == emergencyContacts.count {
                 requestContactsAccess()
+            } else {
+                // Handle emergency contact tap - make phone call
+                let contact = emergencyContacts[indexPath.row]
+                if let phoneNumber = contact["phone"] {
+                    makeEmergencyCall(to: phoneNumber)
+                }
             }
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        // Only allow editing in emergency contacts section and not for "Add Contact" row
+        if indexPath.section == 1 && indexPath.row < emergencyContacts.count {
+            // Only allow deletion if there are more than 2 contacts
+            return emergencyContacts.count > 2
+        }
+        return false
+    }
+    
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if indexPath.section == 1 && indexPath.row < emergencyContacts.count {
             if editingStyle == .delete {
-                emergencyContacts.remove(at: indexPath.row)
-                saveEmergencyContacts()
-                tableView.deleteRows(at: [indexPath], with: .fade)
+                // Double check minimum contacts rule
+                if emergencyContacts.count > 2 {
+                    emergencyContacts.remove(at: indexPath.row)
+                    saveEmergencyContacts()
+                    tableView.deleteRows(at: [indexPath], with: .fade)
+                } else {
+                    showMinimumContactsAlert()
+                }
             }
         }
     }
@@ -325,6 +358,50 @@ extension SettingsViewController: UITableViewDelegate, UITableViewDataSource {
             }
         })
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+    
+    private func showMinimumContactsAlert() {
+        let alert = UIAlertController(
+            title: "Minimum Contacts Required",
+            message: "You must have at least 2 emergency contacts for safety purposes. Add more contacts before deleting this one.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func makeEmergencyCall(to phoneNumber: String) {
+        // Clean the phone number by removing spaces, dashes, parentheses, and other non-numeric characters
+        let cleanedNumber = phoneNumber.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        
+        // Create the tel URL
+        guard let phoneURL = URL(string: "tel:\(cleanedNumber)") else {
+            showCallErrorAlert()
+            return
+        }
+        
+        // Check if the device can make phone calls
+        if UIApplication.shared.canOpenURL(phoneURL) {
+            UIApplication.shared.open(phoneURL, options: [:]) { success in
+                if !success {
+                    DispatchQueue.main.async {
+                        self.showCallErrorAlert()
+                    }
+                }
+            }
+        } else {
+            showCallErrorAlert()
+        }
+    }
+    
+    private func showCallErrorAlert() {
+        let alert = UIAlertController(
+            title: "Unable to Make Call",
+            message: "This device cannot make phone calls or the phone number is invalid.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
 }

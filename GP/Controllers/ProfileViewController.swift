@@ -51,15 +51,48 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         return label
     }()
     
+    private let editNameButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("👤 Edit Name", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        button.isAccessibilityElement = true
+        button.accessibilityLabel = "Edit Name Button"
+        return button
+    }()
+    
     private let editEmailButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Edit Email", for: .normal)
+        button.setTitle("✉️ Edit Email", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.8)
-        button.layer.cornerRadius = 8
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         button.isAccessibilityElement = true
         button.accessibilityLabel = "Edit Email Button"
+        return button
+    }()
+    
+    private let changePasswordButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("🔒 Change Password", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        button.isAccessibilityElement = true
+        button.accessibilityLabel = "Change Password Button"
+        return button
+    }()
+    
+    private let profileDetailsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(systemName: "person.text.rectangle"), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        button.layer.cornerRadius = 20
+        button.isAccessibilityElement = true
+        button.accessibilityLabel = "Profile Details Button"
         return button
     }()
     
@@ -109,9 +142,12 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         view.addSubview(profileImageView)
         view.addSubview(nameLabel)
         view.addSubview(emailLabel)
+        view.addSubview(editNameButton)
         view.addSubview(editEmailButton)
+        view.addSubview(changePasswordButton)
         view.addSubview(logoutButton)
         view.addSubview(activityIndicator)
+        view.addSubview(profileDetailsButton)
         view.addSubview(infoButton)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
@@ -141,12 +177,22 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             emailLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             emailLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            editEmailButton.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 20),
+            editNameButton.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 20),
+            editNameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            editNameButton.widthAnchor.constraint(equalToConstant: 200),
+            editNameButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            editEmailButton.topAnchor.constraint(equalTo: editNameButton.bottomAnchor, constant: 12),
             editEmailButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             editEmailButton.widthAnchor.constraint(equalToConstant: 200),
-            editEmailButton.heightAnchor.constraint(equalToConstant: 50),
+            editEmailButton.heightAnchor.constraint(equalToConstant: 44),
             
-            logoutButton.topAnchor.constraint(equalTo: editEmailButton.bottomAnchor, constant: 20),
+            changePasswordButton.topAnchor.constraint(equalTo: editEmailButton.bottomAnchor, constant: 12),
+            changePasswordButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            changePasswordButton.widthAnchor.constraint(equalToConstant: 200),
+            changePasswordButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            logoutButton.topAnchor.constraint(equalTo: changePasswordButton.bottomAnchor, constant: 20),
             logoutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoutButton.widthAnchor.constraint(equalToConstant: 200),
             logoutButton.heightAnchor.constraint(equalToConstant: 50),
@@ -154,18 +200,35 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
+            profileDetailsButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            profileDetailsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            profileDetailsButton.widthAnchor.constraint(equalToConstant: 40),
+            profileDetailsButton.heightAnchor.constraint(equalToConstant: 40),
+            
             infoButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             infoButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             infoButton.widthAnchor.constraint(equalToConstant: 40),
             infoButton.heightAnchor.constraint(equalToConstant: 40)
         ])
         
+        editNameButton.addTarget(self, action: #selector(editNameTapped), for: .touchUpInside)
         editEmailButton.addTarget(self, action: #selector(editEmailTapped), for: .touchUpInside)
+        changePasswordButton.addTarget(self, action: #selector(changePasswordTapped), for: .touchUpInside)
         logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
+        profileDetailsButton.addTarget(self, action: #selector(viewProfileInfoTapped), for: .touchUpInside)
         infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
         
         loadLocalProfileImage()
         loadUserData()
+        
+        // Setup gradient layers after view loads
+        setupButtonGradients()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Update gradient frames when layout changes
+        updateButtonGradients()
     }
     
     @objc private func logoutTapped() {
@@ -248,10 +311,32 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         view.endEditing(true)
     }
     
+    @objc private func editNameTapped() {
+        let alert = UIAlertController(title: "Edit Name", message: "Enter your new name.", preferredStyle: .alert)
+        alert.addTextField { [weak self] textField in
+            textField.placeholder = "New Name"
+            textField.text = self?.nameLabel.text
+            textField.autocapitalizationType = .words
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            guard let newName = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !newName.isEmpty,
+                  newName.count >= 2 else {
+                self.showAlert(title: "Invalid Name", message: "Please enter a valid name with at least 2 characters.")
+                return
+            }
+            self.updateName(newName)
+        })
+        present(alert, animated: true)
+    }
+    
     @objc private func editEmailTapped() {
         let alert = UIAlertController(title: "Edit Email", message: "Enter your new email address.", preferredStyle: .alert)
-        alert.addTextField { textField in
+        alert.addTextField { [weak self] textField in
             textField.placeholder = "New Email"
+            textField.text = self?.emailLabel.text
             textField.keyboardType = .emailAddress
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
@@ -266,6 +351,53 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             self.updateEmail(newEmail)
         })
         present(alert, animated: true)
+    }
+    
+    @objc private func changePasswordTapped() {
+        let alert = UIAlertController(title: "Change Password", message: "Enter your current and new password.", preferredStyle: .alert)
+        
+        alert.addTextField { textField in
+            textField.placeholder = "Current Password"
+            textField.isSecureTextEntry = true
+        }
+        
+        alert.addTextField { textField in
+            textField.placeholder = "New Password"
+            textField.isSecureTextEntry = true
+        }
+        
+        alert.addTextField { textField in
+            textField.placeholder = "Confirm New Password"
+            textField.isSecureTextEntry = true
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Change", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            guard let currentPassword = alert.textFields?[0].text,
+                  let newPassword = alert.textFields?[1].text,
+                  let confirmPassword = alert.textFields?[2].text else { return }
+            
+            if newPassword != confirmPassword {
+                self.showAlert(title: "Password Mismatch", message: "New passwords don't match.")
+                return
+            }
+            
+            if newPassword.count < 6 {
+                self.showAlert(title: "Weak Password", message: "Password must be at least 6 characters long.")
+                return
+            }
+            
+            self.changePassword(currentPassword: currentPassword, newPassword: newPassword)
+        })
+        present(alert, animated: true)
+    }
+    
+    @objc private func viewProfileInfoTapped() {
+        let profileInfoVC = ProfileInfoViewController()
+        let navigationController = UINavigationController(rootViewController: profileInfoVC)
+        navigationController.modalPresentationStyle = .fullScreen
+        present(navigationController, animated: true)
     }
     
     private func updateEmail(_ newEmail: String) {
@@ -300,18 +432,100 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         }
     }
     
+    private func updateName(_ newName: String) {
+        setLoading(true)
+        guard let user = Auth.auth().currentUser else {
+            showAlert(title: "Error", message: "User not signed in.")
+            setLoading(false)
+            return
+        }
+        
+        let db = Firestore.firestore()
+        db.collection("users").document(user.uid).updateData([
+            "name": newName
+        ]) { [weak self] error in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.setLoading(false)
+                if let error = error {
+                    self.showAlert(title: "Error", message: error.localizedDescription)
+                    return
+                }
+                self.nameLabel.text = newName
+                self.showAlert(title: "Success", message: "Name updated successfully!")
+            }
+        }
+    }
+    
+    private func changePassword(currentPassword: String, newPassword: String) {
+        setLoading(true)
+        guard let user = Auth.auth().currentUser,
+              let email = user.email else {
+            showAlert(title: "Error", message: "User not signed in.")
+            setLoading(false)
+            return
+        }
+        
+        // Reauthenticate user with current password
+        let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+        user.reauthenticate(with: credential) { [weak self] _, error in
+            guard let self = self else { return }
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.setLoading(false)
+                    self.showAlert(title: "Authentication Failed", message: "Current password is incorrect.")
+                }
+                return
+            }
+            
+            // Update password
+            user.updatePassword(to: newPassword) { error in
+                DispatchQueue.main.async {
+                    self.setLoading(false)
+                    if let error = error {
+                        self.showAlert(title: "Error", message: error.localizedDescription)
+                        return
+                    }
+                    self.showAlert(title: "Success", message: "Password changed successfully!")
+                }
+            }
+        }
+    }
+
     private func setLoading(_ loading: Bool) {
         DispatchQueue.main.async {
             if loading {
                 self.activityIndicator.startAnimating()
-                self.editEmailButton.isEnabled = false
-                self.logoutButton.isEnabled = false
+                // Disable all buttons with visual feedback
+                self.setButtonsEnabled(false)
+                self.view.alpha = 0.7
             } else {
                 self.activityIndicator.stopAnimating()
-                self.editEmailButton.isEnabled = true
-                self.logoutButton.isEnabled = true
+                // Re-enable all buttons
+                self.setButtonsEnabled(true)
+                
+                // Smooth animation back to normal state
+                UIView.animate(withDuration: 0.3) {
+                    self.view.alpha = 1.0
+                }
             }
         }
+    }
+    
+    private func setButtonsEnabled(_ enabled: Bool) {
+        editNameButton.isEnabled = enabled
+        editEmailButton.isEnabled = enabled
+        changePasswordButton.isEnabled = enabled
+        profileDetailsButton.isEnabled = enabled
+        logoutButton.isEnabled = enabled
+        
+        // Visual feedback for disabled state
+        let alpha: CGFloat = enabled ? 1.0 : 0.6
+        editNameButton.alpha = alpha
+        editEmailButton.alpha = alpha
+        changePasswordButton.alpha = alpha
+        profileDetailsButton.alpha = alpha
+        logoutButton.alpha = alpha
     }
     
     private func saveProfileImageLocally(_ image: UIImage) {
@@ -339,6 +553,42 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         return paths[0].appendingPathComponent("profileImage.jpg")
     }
     
+    private func setupButtonGradients() {
+        setupButtonGradient(for: editNameButton, colors: [UIColor.systemGreen.cgColor, UIColor.systemTeal.cgColor], shadowColor: UIColor.systemGreen.cgColor)
+        setupButtonGradient(for: editEmailButton, colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor], shadowColor: UIColor.systemBlue.cgColor)
+        setupButtonGradient(for: changePasswordButton, colors: [UIColor.systemOrange.cgColor, UIColor.systemRed.cgColor], shadowColor: UIColor.systemOrange.cgColor)
+    }
+    
+    private func setupButtonGradient(for button: UIButton, colors: [CGColor], shadowColor: CGColor) {
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.colors = colors
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
+        gradientLayer.cornerRadius = 12
+        
+        // Remove existing gradient layers
+        button.layer.sublayers?.removeAll { $0 is CAGradientLayer }
+        
+        button.layer.insertSublayer(gradientLayer, at: 0)
+        button.layer.cornerRadius = 12
+        button.layer.shadowColor = shadowColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 4)
+        button.layer.shadowRadius = 8
+        button.layer.shadowOpacity = 0.3
+    }
+    
+    private func updateButtonGradients() {
+        updateButtonGradientFrame(for: editNameButton)
+        updateButtonGradientFrame(for: editEmailButton)
+        updateButtonGradientFrame(for: changePasswordButton)
+    }
+    
+    private func updateButtonGradientFrame(for button: UIButton) {
+        if let gradientLayer = button.layer.sublayers?.first(where: { $0 is CAGradientLayer }) as? CAGradientLayer {
+            gradientLayer.frame = button.bounds
+        }
+    }
+
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -359,3 +609,4 @@ extension String {
         return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
 }
+

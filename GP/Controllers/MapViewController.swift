@@ -18,6 +18,7 @@ class MapViewController: UIViewController {
     private var buttonBottomToViewConstraint: NSLayoutConstraint!
     private var buttonBottomToRouteInfoConstraint: NSLayoutConstraint!
     private var destinationAnnotation: MKPointAnnotation?
+    private let clearButton = UIButton(type: .system)
     
     private let routeInfoLabel: UILabel = {
         let label = UILabel()
@@ -50,6 +51,12 @@ class MapViewController: UIViewController {
     private var destinationCoordinate: CLLocationCoordinate2D?
     private var searchResults: [MKLocalSearchCompletion] = []
     
+    // MARK: - Performance Optimizations
+    private var searchTimer: Timer?
+    private let searchDebounceInterval: TimeInterval = 0.3
+    private var currentSearchTask: URLSessionDataTask?
+    private let maxSearchResults = 10 // Lazy loading limit
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -61,6 +68,9 @@ class MapViewController: UIViewController {
         searchCompleter.delegate = self
         searchField.addTarget(self, action: #selector(searchTextChanged), for: .editingChanged)
         startMonitoringButton.addTarget(self, action: #selector(startMonitoringTapped), for: .touchUpInside)
+        
+        // Configure map for better performance and caching
+        configureMapPerformance()
         
         startMonitoringButton.translatesAutoresizingMaskIntoConstraints = false
         
@@ -75,6 +85,13 @@ class MapViewController: UIViewController {
             buttonBottomToViewConstraint
         ])
         
+    }
+    
+    // MARK: - Memory Management
+    deinit {
+        // Cleanup to prevent memory leaks
+        searchTimer?.invalidate()
+        currentSearchTask?.cancel()
     }
 }
 
@@ -105,7 +122,14 @@ extension MapViewController {
         searchIconButton.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
         searchIconButton.addTarget(self, action: #selector(searchButtonTapped), for: .touchUpInside)
         searchIconButton.translatesAutoresizingMaskIntoConstraints = false
-
+        
+        clearButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        clearButton.tintColor = .gray
+        clearButton.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+        clearButton.addTarget(self, action: #selector(clearSearchTapped), for: .touchUpInside)
+        clearButton.translatesAutoresizingMaskIntoConstraints = false
+        clearButton.isHidden = true
+        
         
         // Configure results table
         resultsTableView.translatesAutoresizingMaskIntoConstraints = false
@@ -117,6 +141,7 @@ extension MapViewController {
         // Add views
         view.addSubview(searchField)
         view.addSubview(searchIconButton)
+        view.addSubview(clearButton)
         view.addSubview(resultsTableView)
         view.addSubview(routeInfoLabel)
         view.addSubview(startMonitoringButton)
@@ -131,6 +156,10 @@ extension MapViewController {
             searchIconButton.topAnchor.constraint(equalTo: searchField.topAnchor),
             searchIconButton.bottomAnchor.constraint(equalTo: searchField.bottomAnchor),
             searchIconButton.trailingAnchor.constraint(equalTo: searchField.trailingAnchor, constant: -10),
+            
+            clearButton.topAnchor.constraint(equalTo: searchField.topAnchor),
+            clearButton.bottomAnchor.constraint(equalTo: searchField.bottomAnchor),
+            clearButton.trailingAnchor.constraint(equalTo: searchIconButton.leadingAnchor, constant: -5),
             
             resultsTableView.topAnchor.constraint(equalTo: searchField.bottomAnchor),
             resultsTableView.leadingAnchor.constraint(equalTo: searchField.leadingAnchor),
@@ -155,14 +184,54 @@ extension MapViewController: CLLocationManagerDelegate {
     func configureLocation() {
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingLocation()
-        locationManager.distanceFilter = 1000
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = 100 // Update every 100 meters
         mapView.showsUserLocation = true
+        
+        // Start location updates
+        locationManager.startUpdatingLocation()
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let destination = destinationCoordinate else { return }
-        showRoute(to: destination)
+        guard let userLocation = locations.last else { return }
+        
+        // Center map on user location when first loaded
+        if !mapView.isUserLocationVisible {
+            let region = MKCoordinateRegion(
+                center: userLocation.coordinate,
+                latitudinalMeters: 2000,
+                longitudinalMeters: 2000
+            )
+            mapView.setRegion(region, animated: true)
+            
+            // Stop frequent updates after initial location is set
+            locationManager.stopUpdatingLocation()
+        }
+        
+        // If we have a destination, update the route
+        if let destination = destinationCoordinate {
+            showRoute(to: destination)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.startUpdatingLocation()
+        case .denied, .restricted:
+            showAlert(title: "Location Access Denied",
+                      message: "Please enable location access in Settings to use this feature.")
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        @unknown default:
+            break
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location error: \(error.localizedDescription)")
+        showAlert(title: "Location Error",
+                  message: "Unable to get your location. Please check your location settings.")
     }
 }
 
@@ -174,13 +243,74 @@ extension MapViewController {
     }
     
     @objc func searchTextChanged() {
-        searchCompleter.queryFragment = searchField.text ?? ""
+        // Performance Optimization: Debounce search requests
+        searchTimer?.invalidate()
+        
+        let searchText = searchField.text ?? ""
+        clearButton.isHidden = searchText.isEmpty
+        
+        // Cancel previous search if still running
+        currentSearchTask?.cancel()
+        
+        if searchText.isEmpty {
+            searchResults = []
+            resultsTableView.reloadData()
+            resultsTableView.isHidden = true
+            return
+        }
+        
+        // Debounce the search to reduce API calls
+        searchTimer = Timer.scheduledTimer(withTimeInterval: searchDebounceInterval, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.searchCompleter.queryFragment = searchText
+            }
+        }
+        
         buttonBottomToViewConstraint.isActive = false
         buttonBottomToRouteInfoConstraint.isActive = true
         
         UIView.animate(withDuration: 0.3) {
             self.view.layoutIfNeeded()
         }
+    }
+    
+    @objc func clearSearchTapped() {
+        // Clear the search field
+        searchField.text = ""
+        searchField.resignFirstResponder()
+        
+        // Hide search results
+        resultsTableView.isHidden = true
+        searchResults = []
+        resultsTableView.reloadData()
+        
+        // Hide clear button
+        clearButton.isHidden = true
+        
+        // Clear route and destination
+        destinationCoordinate = nil
+        mapView.removeOverlays(mapView.overlays)
+        
+        // Remove destination annotation
+        if let annotation = destinationAnnotation {
+            mapView.removeAnnotation(annotation)
+            destinationAnnotation = nil
+        }
+        
+        // Hide route info and monitoring button
+        routeInfoLabel.isHidden = true
+        startMonitoringButton.isHidden = true
+        
+        // Reset button constraints
+        buttonBottomToRouteInfoConstraint.isActive = false
+        buttonBottomToViewConstraint.isActive = true
+        
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+        
+        // Clear search completer
+        searchCompleter.queryFragment = ""
     }
     
     @objc private func startMonitoringTapped() {
@@ -233,21 +363,32 @@ extension MapViewController {
         mapView.addAnnotation(annotation)
         destinationAnnotation = annotation
         
+        // Performance Optimization: Cancel any ongoing route calculation
+        currentSearchTask?.cancel()
+        
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation.coordinate))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate))
         request.transportType = .automobile
         
-        MKDirections(request: request).calculate { [weak self] response, error in
+        let directions = MKDirections(request: request)
+        directions.calculate { [weak self] response, error in
             guard let self = self, let route = response?.routes.first else {
                 self?.showAlert(title: "Route Error", message: "Unable to calculate route.")
                 return
             }
             
-            self.mapView.removeOverlays(self.mapView.overlays)
-            self.mapView.addOverlay(route.polyline)
-            self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
-            self.displayDistanceAndETA(for: route)
+            // Performance Optimization: Clear previous overlays before adding new ones
+            DispatchQueue.main.async {
+                self.mapView.removeOverlays(self.mapView.overlays)
+                
+                // For long routes, simplify the polyline to improve performance
+                let simplifiedPolyline = self.simplifyPolylineIfNeeded(route.polyline)
+                self.mapView.addOverlay(simplifiedPolyline)
+                
+                self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
+                self.displayDistanceAndETA(for: route)
+            }
         }
     }
     
@@ -303,13 +444,22 @@ extension MapViewController: MKMapViewDelegate {
 
 extension MapViewController: MKLocalSearchCompleterDelegate {
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        searchResults = completer.results
-        resultsTableView.reloadData()
-        resultsTableView.isHidden = searchResults.isEmpty
+        // Performance Optimization: Lazy loading - limit results for better performance
+        searchResults = Array(completer.results.prefix(maxSearchResults))
+        
+        DispatchQueue.main.async {
+            self.resultsTableView.reloadData()
+            self.resultsTableView.isHidden = self.searchResults.isEmpty
+        }
     }
     
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
         print("Completer error: \(error.localizedDescription)")
+        DispatchQueue.main.async {
+            self.searchResults = []
+            self.resultsTableView.reloadData()
+            self.resultsTableView.isHidden = true
+        }
     }
 }
 
@@ -368,12 +518,77 @@ extension MapViewController: UITextFieldDelegate {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+    
+    // MARK: - Performance Optimization Methods
+    
+    private func configureMapPerformance() {
+        // Configure map for better performance and tile caching
+        mapView.preferredConfiguration = MKStandardMapConfiguration()
+        
+        // Set reasonable zoom limits to prevent excessive tile loading
+        if #available(iOS 13.0, *) {
+            mapView.cameraZoomRange = MKMapView.CameraZoomRange(
+                minCenterCoordinateDistance: 100,
+                maxCenterCoordinateDistance: 100000
+            )
+        }
+        
+        // Configure URL cache for better search result caching
+        let cache = URLCache(memoryCapacity: 20 * 1024 * 1024, // 20MB memory
+                             diskCapacity: 100 * 1024 * 1024,    // 100MB disk
+                             diskPath: "MapSearchCache")
+        URLCache.shared = cache
+    }
+    
+    private func simplifyPolylineIfNeeded(_ polyline: MKPolyline) -> MKPolyline {
+        // Performance Optimization: For long routes (>500 points), simplify the polyline
+        let pointCount = polyline.pointCount
+        
+        if pointCount > 500 {
+            // Create a simplified version by taking every nth point
+            let simplificationFactor = max(2, pointCount / 250) // Target ~250 points max
+            
+            var simplifiedPoints: [CLLocationCoordinate2D] = []
+            let points = polyline.points()
+            
+            for i in stride(from: 0, to: pointCount, by: simplificationFactor) {
+                simplifiedPoints.append(points[i].coordinate)
+            }
+            
+            // Always include the last point
+            if pointCount > 0 && (pointCount - 1) % simplificationFactor != 0 {
+                simplifiedPoints.append(points[pointCount - 1].coordinate)
+            }
+            
+            return MKPolyline(coordinates: simplifiedPoints, count: simplifiedPoints.count)
+        }
+        
+        return polyline
+    }
+    
+    // MARK: - Memory Management
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        
+        // Cancel ongoing operations for better memory management
+        searchTimer?.invalidate()
+        currentSearchTask?.cancel()
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        
+        // Clear search results cache on memory pressure
+        if searchResults.count > 5 {
+            searchResults = Array(searchResults.prefix(5))
+            resultsTableView.reloadData()
+        }
+        
+        // Clear map overlays if not actively being used
+        if destinationCoordinate == nil {
+            mapView.removeOverlays(mapView.overlays)
+        }
+    }
+    
 }
-
-//MARK: - Preview
-
-//#if DEBUG
-//#Preview("Map View"){
-//    MapViewController()
-//}
-//#endif

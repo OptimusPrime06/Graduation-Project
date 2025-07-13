@@ -15,7 +15,7 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
     
     var sequencehandler = VNSequenceRequestHandler()
     var drowsyFrameCounter = 0
-    let drowsyThreshold = 10
+    let drowsyThreshold = 3  // Fire alarm after ~0.3 seconds (filters out blinks)
     var earThreshold: CGFloat = 0.2
     var alarmTimer: Timer?
     var audioPlayer: AVAudioPlayer?
@@ -105,6 +105,12 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
         super.viewWillAppear(animated)
         // Reload user preferences in case user has changed
         loadUserPreferences()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Re-enable auto-lock when leaving the view controller
+        UIApplication.shared.isIdleTimerDisabled = false
     }
     
     override func viewDidLayoutSubviews() {
@@ -285,8 +291,8 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
                 self.updateAlertLevel(.none)
             }
             
-            // Existing alarm logic (preserved)
-            if self.drowsyFrameCounter > self.drowsyThreshold {
+            // Existing alarm logic (preserved) - Fire immediately
+            if self.drowsyFrameCounter >= self.drowsyThreshold {
                 self.playAlarm()
                 self.statusLabel.text = "⚠️ Drowsiness Detected!"
                 self.statusLabel.textColor = .red
@@ -456,6 +462,9 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
         
         // Stop the alarm and camera before navigating
         stopAlarm()
+        
+        // Re-enable auto-lock when navigating away
+        UIApplication.shared.isIdleTimerDisabled = false
         
         // Navigate to chatbot tab
         guard let tabBarController = self.tabBarController as? MainTabBarViewController else {
@@ -731,6 +740,10 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
         session?.stopRunning()
         session = nil
         stopAlarm()
+        
+        // Re-enable auto-lock when stopping camera
+        UIApplication.shared.isIdleTimerDisabled = false
+        
         DispatchQueue.main.async {
             self.previewLayer.removeFromSuperlayer()
             UIView.animate(withDuration: 0.3) {
@@ -763,6 +776,9 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
         startButton.isHidden = true    // Hide start button while monitoring
         stopButton.isEnabled = true   // Enable stop button
         
+        // Keep screen on while monitoring
+        UIApplication.shared.isIdleTimerDisabled = true
+        
         // Reset frame counter and alert level
         frameSkipCounter = 0
         currentAlertLevel = .none
@@ -787,6 +803,9 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
         
         // Reset drowsiness timer when stopping camera
         resetDrowsinessTimer()
+        
+        // Re-enable auto-lock when stopping monitoring
+        UIApplication.shared.isIdleTimerDisabled = false
         
         DispatchQueue.main.async {
             // Reset UI based on calibration status
@@ -885,5 +904,8 @@ class CarViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
         countdownTimer?.invalidate()
         audioPlayer?.stop()
         session?.stopRunning()
+        
+        // Re-enable auto-lock when view controller is deallocated
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 }
